@@ -1,38 +1,51 @@
+import * as secure from "../helper/secure.js";
+
 /**
  * Response handler wrapper that standardizes API responses
  * @param {Function} controllerFunction - The controller function to wrap
  * @returns {Function} - Express middleware function
  */
-export default function responseHandler(controllerFunction) {
-    return async (req, res, next) => {
-        try {
-            // Call the controller function
-            const result = await controllerFunction(req, res, next);
-            
-            // If the controller has already sent a response, don't send another one
-            if (res.headersSent) {
-                return;
+export default (controllerFunction) => async (request, response, next) => {
+    try {
+        const { status = 200, ...resObj } = await controllerFunction(request, response, next);
+        console.log("Controller response:", resObj);
+
+        let encrypted_response = null;
+        if (resObj.data) {
+            try {
+                encrypted_response = secure.encrypt(JSON.stringify(resObj.data));
+                console.log("Encrypted response data:", encrypted_response);
+            } catch (encryptionError) {
+                console.error("Encryption error:", encryptionError);
+                if (!response.headersSent) {
+                    return response.status(500).json({
+                        status: 500,
+                        msg: "Failed to encrypt response",
+                        data: null,
+                    });
+                }
             }
-            
-            // Standardize the response format
-            return res.status(200).json({
-                success: true,
-                data: result
-            });
-        } catch (error) {
-            // Log the error for debugging
-            console.error('API Error:', error);
-            
-            // If the controller has already sent a response, don't send another one
-            if (res.headersSent) {
-                return;
-            }
-            
-            // Return a standardized error response
-            return res.status(error.status || 500).json({
-                success: false,
-                message: error.message || 'An unexpected error occurred'
+        } else {
+            console.warn("No data to encrypt, received:", resObj.data);
+        }
+
+        if (!response.headersSent) {
+            return response.status(+status).json({
+                status,
+                msg: resObj.msg,
+                meta: resObj.meta,
+                data: encrypted_response,
             });
         }
-    };
-} 
+    } catch (error) {
+        console.error("Error in response handler:", error);
+
+        if (!response.headersSent) {
+            return response.status(400).json({
+                status: false,
+                message: "Something went wrong",
+                data: [],
+            });
+        }
+    }
+}; 

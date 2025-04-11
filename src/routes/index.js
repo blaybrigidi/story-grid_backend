@@ -1,4 +1,5 @@
 import adminRoutes from './admin.routes.js';
+import userRoutes from './userRoute.js';
 import auth from '../app/middleware/auth/auth.js';
 
 /**
@@ -9,6 +10,9 @@ import auth from '../app/middleware/auth/auth.js';
 export default function initializeRoutes(app, router) {
   // Mount admin routes
   adminRoutes(router, auth);
+  
+  // Mount user routes
+  userRoutes(router, auth);
   
   // Mount router to app
   app.use('/api', router);

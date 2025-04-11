@@ -21,11 +21,11 @@ const User = sequelize.define('User', {
     },
     firstName: {
         type: DataTypes.STRING,
-        allowNull: true
+        allowNull: false
     },
     lastName: {
         type: DataTypes.STRING,
-        allowNull: true
+        allowNull: false
     },
     role: {
         type: DataTypes.ENUM('user', 'admin'),
@@ -34,10 +34,6 @@ const User = sequelize.define('User', {
     isBlocked: {
         type: DataTypes.BOOLEAN,
         defaultValue: false
-    },
-    kycStatus: {
-        type: DataTypes.ENUM('pending', 'approved', 'rejected'),
-        defaultValue: 'pending'
     },
     country: {
         type: DataTypes.STRING,
