@@ -11,11 +11,17 @@ const sequelize = new Sequelize(
         host: process.env.DB_HOST || 'localhost',
         dialect: process.env.DB_DIALECT || 'mysql',
         port: process.env.DB_PORT || 3306,
-        logging: process.env.NODE_ENV === 'development' ? console.log : false,
+        logging: (msg) => console.log(`[Sequelize] ${msg}`),
+        dialectOptions: {
+            connectTimeout: 60000, // 60 seconds
+            ssl: process.env.DB_SSL === 'true' ? {
+                rejectUnauthorized: false
+            } : false
+        },
         pool: {
             max: 5,
             min: 0,
-            acquire: 30000,
+            acquire: 60000, // 60 seconds
             idle: 10000
         }
     }
@@ -24,10 +30,17 @@ const sequelize = new Sequelize(
 // Test the connection
 const testConnection = async () => {
     try {
+        console.log('Attempting to connect to the database...');
+        console.log(`Host: ${process.env.DB_HOST}`);
+        console.log(`Port: ${process.env.DB_PORT}`);
+        console.log(`Database: ${process.env.DB_NAME}`);
+        console.log(`User: ${process.env.DB_USER}`);
+        
         await sequelize.authenticate();
         console.log('Database connection has been established successfully.');
     } catch (error) {
         console.error('Unable to connect to the database:', error);
+        process.exit(1);
     }
 };
 

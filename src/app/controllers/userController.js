@@ -1,13 +1,12 @@
+/** @format */
 import userService from '../services/userService.js';
 
 /**
  * Controller for user signup
  * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Express next middleware function
  * @returns {Object} - Response object with status, message, and data
  */
-export const signup = async (req, res, next) => {
+export const signup = async (req) => {
   try {
     const userData = req.body.data;
     
@@ -20,15 +19,12 @@ export const signup = async (req, res, next) => {
       };
     }
     
-    // Call the userService to handle the registration
     const result = await userService.register(userData);
     
-    // Return the result in the specified format
     return {
       status: result.status || 200,
       msg: result.msg || "User registered successfully",
       data: result.data,
-      meta: result.meta
     };
   } catch (error) {
     console.error("Signup error:", error);
@@ -43,11 +39,9 @@ export const signup = async (req, res, next) => {
 /**
  * Controller for user login request
  * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Express next middleware function
  * @returns {Object} - Response object with status, message, and data
  */
-export const requestLogin = async (req, res, next) => {
+export const requestLogin = async (req) => {
   try {
     const { email, password } = req.body.data;
     
@@ -83,11 +77,9 @@ export const requestLogin = async (req, res, next) => {
 /**
  * Controller for verifying OTP and completing login
  * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Express next middleware function
  * @returns {Object} - Response object with status, message, and data
  */
-export const verifyLogin = async (req, res, next) => {
+export const verifyLogin = async (req) => {
   try {
     const { email, otp } = req.body.data;
     
@@ -123,23 +115,20 @@ export const verifyLogin = async (req, res, next) => {
 /**
  * Controller for getting user profile
  * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Express next middleware function
  * @returns {Object} - Response object with status, message, and data
  */
-export const getProfile = async (req, res, next) => {
+export const getProfile = async (req) => {
   try {
-    const userId = req.user.id; // Assuming user ID is available in the request
+    const userId = req.user.id;
     
     // Call the userService to get the user profile
     const result = await userService.getProfile(userId);
     
     // Return the result in the specified format
     return {
-      status: 200,
-      msg: "Profile retrieved successfully",
-      data: result,
-      meta: null
+      status: result.status,
+      msg: result.msg,
+      data: result.data
     };
   } catch (error) {
     console.error("Get profile error:", error);
@@ -154,13 +143,11 @@ export const getProfile = async (req, res, next) => {
 /**
  * Controller for updating user profile
  * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Express next middleware function
  * @returns {Object} - Response object with status, message, and data
  */
-export const updateProfile = async (req, res, next) => {
+export const updateProfile = async (req) => {
   try {
-    const userId = req.user.id; // Assuming user ID is available in the request
+    const userId = req.user.id;
     const updateData = req.body.data;
     
     // Call the userService to update the user profile
@@ -168,10 +155,9 @@ export const updateProfile = async (req, res, next) => {
     
     // Return the result in the specified format
     return {
-      status: 200,
-      msg: "Profile updated successfully",
-      data: result,
-      meta: null
+      status: result.status,
+      msg: result.msg,
+      data: result.data
     };
   } catch (error) {
     console.error("Update profile error:", error);
@@ -186,13 +172,11 @@ export const updateProfile = async (req, res, next) => {
 /**
  * Controller for changing user password
  * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Express next middleware function
  * @returns {Object} - Response object with status, message, and data
  */
-export const changePassword = async (req, res, next) => {
+export const changePassword = async (req) => {
   try {
-    const userId = req.user.id; // Assuming user ID is available in the request
+    const userId = req.user.id;
     const { currentPassword, newPassword } = req.body.data;
     
     // Validate required fields
@@ -209,76 +193,12 @@ export const changePassword = async (req, res, next) => {
     
     // Return the result in the specified format
     return {
-      status: 200,
-      msg: "Password changed successfully",
-      data: result,
-      meta: null
+      status: result.status,
+      msg: result.msg,
+      data: result.data
     };
   } catch (error) {
     console.error("Change password error:", error);
-    return {
-      status: 500,
-      msg: "Internal Server Error",
-      data: null
-    };
-  }
-};
-
-/**
- * Controller for submitting KYC information
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Express next middleware function
- * @returns {Object} - Response object with status, message, and data
- */
-export const submitKYC = async (req, res, next) => {
-  try {
-    const userId = req.user.id; // Assuming user ID is available in the request
-    const kycData = req.body.data;
-    
-    // Call the userService to submit KYC information
-    const result = await userService.submitKYC(userId, kycData);
-    
-    // Return the result in the specified format
-    return {
-      status: 200,
-      msg: "KYC information submitted successfully",
-      data: result,
-      meta: null
-    };
-  } catch (error) {
-    console.error("Submit KYC error:", error);
-    return {
-      status: 500,
-      msg: "Internal Server Error",
-      data: null
-    };
-  }
-};
-
-/**
- * Controller for getting KYC status
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- * @param {Function} next - Express next middleware function
- * @returns {Object} - Response object with status, message, and data
- */
-export const getKYCStatus = async (req, res, next) => {
-  try {
-    const userId = req.user.id; // Assuming user ID is available in the request
-    
-    // Call the userService to get KYC status
-    const result = await userService.getKYCStatus(userId);
-    
-    // Return the result in the specified format
-    return {
-      status: 200,
-      msg: "KYC status retrieved successfully",
-      data: result,
-      meta: null
-    };
-  } catch (error) {
-    console.error("Get KYC status error:", error);
     return {
       status: 500,
       msg: "Internal Server Error",

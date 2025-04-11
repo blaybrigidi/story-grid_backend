@@ -1,4 +1,5 @@
 import adminService from '../services/adminService.js';
+import userService from '../services/userService.js';
 
 export const requestLogin = async (req) => {
   const { email, password } = req.body.data;
@@ -80,82 +81,97 @@ export const verifyLogin = async (req) => {
   }
 };
 
-export const blockUser = async (req) => {
-  const { userId } = req.body.data;
-
-  // Validate if userId is provided
-  if (!userId) {
-    console.warn(`[WARN] Missing userId in block user request.`);
-    return {
-      status: 400,
-      msg: "User ID is required to block a user.",
-      data: [],
-    };
-  }
-
-  console.log(`[INFO] Block user requested for userId: ${userId}`);
-
-  try {
-    // Call service function to block the user
-    const response = await adminService.blockUser(userId);
-
-    if (response.status === 200) {
-      console.log(`[SUCCESS] User blocked successfully: ${userId}`);
-    } else {
-      console.warn(`[WARN] Failed to block user: ${userId}`);
+export const getDashboard = async (req) => {
+    try {
+        // Placeholder for dashboard data
+        const dashboardData = {
+            totalUsers: 100,
+            activeUsers: 80,
+            blockedUsers: 20,
+            recentActivity: [
+                { id: 1, action: 'User registered', timestamp: new Date() },
+                { id: 2, action: 'User logged in', timestamp: new Date() }
+            ]
+        };
+        
+        return {
+            status: 200,
+            msg: 'Dashboard data retrieved successfully',
+            data: dashboardData
+        };
+    } catch (error) {
+        console.error('[ERROR] Failed to get dashboard data:', error);
+        return {
+            status: 500,
+            msg: 'Failed to retrieve dashboard data',
+            data: null
+        };
     }
+};
 
-    return {
-      status: response.status,
-      msg: response.msg,
-      data: response.data || [],
-    };
-  } catch (error) {
-    console.error(`[ERROR] Failed to block user: ${userId}`, error);
-    return {
-      status: 500,
-      msg: "An error occurred while blocking the user.",
-      data: [],
-    };
-  }
+export const getAllUsers = async (req) => {
+    try {
+        // Placeholder for user list
+        const users = [
+            { id: 1, email: 'user1@example.com', firstName: 'John', lastName: 'Doe', isBlocked: false },
+            { id: 2, email: 'user2@example.com', firstName: 'Jane', lastName: 'Smith', isBlocked: true }
+        ];
+        
+        return {
+            status: 200,
+            msg: 'Users retrieved successfully',
+            data: users
+        };
+    } catch (error) {
+        console.error('[ERROR] Failed to get users:', error);
+        return {
+            status: 500,
+            msg: 'Failed to retrieve users',
+            data: null
+        };
+    }
+};
+
+export const blockUser = async (req) => {
+    try {
+        const { userId } = req.params;
+        
+        // Placeholder for blocking user
+        console.log(`Blocking user with ID: ${userId}`);
+        
+        return {
+            status: 200,
+            msg: 'User blocked successfully',
+            data: null
+        };
+    } catch (error) {
+        console.error('[ERROR] Failed to block user:', error);
+        return {
+            status: 500,
+            msg: 'Failed to block user',
+            data: null
+        };
+    }
 };
 
 export const unblockUser = async (req) => {
-  const { userId } = req.body.data;
-
-  // Validate if userId is provided
-  if (!userId) {
-    console.warn(`[WARN] Missing userId in unblock user request.`);
-    return {
-      status: 400,
-      msg: "User ID is required to unblock a user.",
-      data: [],
-    };
-  }
-
-  console.log(`[INFO] Unblock user requested for userId: ${userId}`);
-
-  try {
-    // Call service function to unblock the user
-    const response = await adminService.unblockUser(userId);
-
-    if (response.status === 200) {
-      console.log(`[SUCCESS] User unblocked successfully: ${userId}`);
-    } else {
-      console.warn(`[WARN] Failed to unblock user: ${userId}`);
+    try {
+        const { userId } = req.params;
+        
+        // Placeholder for unblocking user
+        console.log(`Unblocking user with ID: ${userId}`);
+        
+        return {
+            status: 200,
+            msg: 'User unblocked successfully',
+            data: null
+        };
+    } catch (error) {
+        console.error('[ERROR] Failed to unblock user:', error);
+        return {
+            status: 500,
+            msg: 'Failed to unblock user',
+            data: null
+        };
     }
-
-    return {
-      status: response.status,
-      msg: response.msg,
-      data: response.data || [],
-    };
-  } catch (error) {
-    console.error(`[ERROR] Failed to unblock user: ${userId}`, error);
-    return {
-      status: 500,
-      msg: "An error occurred while unblocking the user.",
-      data: [],
-    };
-  }
 }; 

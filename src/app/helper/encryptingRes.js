@@ -7,13 +7,13 @@ import * as secure from "../helper/secure.js";
  */
 export default (controllerFunction) => async (request, response, next) => {
     try {
-        const { status = 200, ...resObj } = await controllerFunction(request, response, next);
-        console.log("Controller response:", resObj);
+        const result = await controllerFunction(request);
+        console.log("Controller response:", result);
 
         let encrypted_response = null;
-        if (resObj.data) {
+        if (result.data) {
             try {
-                encrypted_response = secure.encrypt(JSON.stringify(resObj.data));
+                encrypted_response = secure.encrypt(JSON.stringify(result.data));
                 console.log("Encrypted response data:", encrypted_response);
             } catch (encryptionError) {
                 console.error("Encryption error:", encryptionError);
@@ -26,14 +26,14 @@ export default (controllerFunction) => async (request, response, next) => {
                 }
             }
         } else {
-            console.warn("No data to encrypt, received:", resObj.data);
+            console.warn("No data to encrypt, received:", result.data);
         }
 
         if (!response.headersSent) {
-            return response.status(+status).json({
-                status,
-                msg: resObj.msg,
-                meta: resObj.meta,
+            return response.status(+result.status).json({
+                status: result.status,
+                msg: result.msg,
+                meta: result.meta,
                 data: encrypted_response,
             });
         }
