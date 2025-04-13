@@ -8,6 +8,7 @@ export default function (router, aut) {
 
    /*-------------------- Onboarding APIs ---------------------------------------------------*/
    router.post("/user/signUp", userValidate.signUp, responseHandler(userController.signup));
+   router.post("/user/login", userValidate.valUserLogin, responseHandler(userController.login));
 //    router.get("/user/resendOtp", aut.verifyToken, responseHandler(userController.resendOtp));
 //    router.post("/user/otpVerification", userValidate.otpVerification, aut.verifyToken, responseHandler(userController.verifyOtp));
 //    router.post("/user/updateUsernameAndPhone", userValidate.validateUsernameAndPhoneUpdate, aut.verifyToken, responseHandler(userController.updateUsernameAndPhone));

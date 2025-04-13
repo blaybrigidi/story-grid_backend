@@ -3,6 +3,8 @@ import "./config/loadEnv.js";
 import express from "express";
 import helmet from "helmet";
 import cors from 'cors';
+import passport from 'passport';
+import './app/config/passport.js';
 import decryptReq from "./app/helper/decryptingReq.js";
 import initializeRoutes from "./routes/index.js";
 import sequelize from "./config/db_connect.js";
@@ -11,6 +13,7 @@ import auth from './app/middleware/auth.js';
 import userRoutes from './routes/userRoute.js';
 import adminRoutes from './routes/adminRoute.js';
 import friendRoutes from './routes/friendRoute.js';
+import authRoutes from './routes/authRoute.js';
 
 // Load environment variables
 // dotenv.config();
@@ -33,6 +36,9 @@ app.use(cors());
 
 // Decrypt request middleware
 decryptReq(app);
+
+// Initialize Passport
+app.use(passport.initialize());
 
 // Debug logger
 app.use((req, res, next) => {
@@ -135,9 +141,10 @@ router.get("/ping", (req, res) => {
 });
 
 // Routes
-app.use('/api/users', userRoutes);
+app.use('/api/users', auth.verifyToken, userRoutes);
 app.use('/api/admin', auth.verifyAdminToken, adminRoutes);
 app.use('/api/friends', auth.verifyToken, friendRoutes);
+app.use('/api/auth', authRoutes);
 
 // Test database connection
 testConnection();

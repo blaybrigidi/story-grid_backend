@@ -8,10 +8,8 @@ export default function (router, aut) {
     router.post("/friend/request", aut.verifyToken, aut.isUserVerified, friendValidate.validateFriendRequest, responseHandler(friendController.sendFriendRequest)
     );
 
-    router.post("/friend/accept/:friendId", 
-        aut.verifyToken, 
-        aut.isUserVerified, 
-        responseHandler(friendController.acceptFriendRequest)
+    router.post("/friend/accept/:friendId", aut.verifyToken, aut.isUserVerified, 
+    responseHandler(friendController.acceptFriendRequest)
     );
 
     router.get("/friend/pending", 

@@ -9,7 +9,7 @@ const Friendship = sequelize.define('Friendship', {
         autoIncrement: true
     },
     userId: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING(36),
         allowNull: false,
         references: {
             model: User,
@@ -17,7 +17,7 @@ const Friendship = sequelize.define('Friendship', {
         }
     },
     friendId: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.STRING(36),
         allowNull: false,
         references: {
             model: User,

@@ -3,9 +3,14 @@ import sequelize from '../config/database.js';
 
 const User = sequelize.define('User', {
     id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        primaryKey: true
+    },
+    googleId: {
+        type: DataTypes.STRING,
+        unique: true,
+        allowNull: true
     },
     email: {
         type: DataTypes.STRING,
@@ -15,10 +20,6 @@ const User = sequelize.define('User', {
             isEmail: true
         }
     },
-    password: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
     firstName: {
         type: DataTypes.STRING,
         allowNull: false
@@ -27,28 +28,27 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: false
     },
-    role: {
-        type: DataTypes.ENUM('user', 'admin'),
-        defaultValue: 'user'
-    },
-    isBlocked: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false
-    },
-    country: {
+    profilePicture: {
         type: DataTypes.STRING,
         allowNull: true
     },
-    createdAt: {
-        type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW
+    googleAccessToken: {
+        type: DataTypes.STRING,
+        allowNull: true
     },
-    updatedAt: {
+    googleRefreshToken: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    isEmailVerified: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    },
+    lastLogin: {
         type: DataTypes.DATE,
-        defaultValue: DataTypes.NOW
+        allowNull: true
     }
 }, {
-    tableName: 'users',
     timestamps: true
 });
 

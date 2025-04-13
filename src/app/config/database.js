@@ -27,7 +27,7 @@ const sequelize = new Sequelize(
     }
 );
 
-// Test the connection
+// Test the connection and sync database
 const testConnection = async () => {
     try {
         console.log('Attempting to connect to the database...');
@@ -38,6 +38,12 @@ const testConnection = async () => {
         
         await sequelize.authenticate();
         console.log('Database connection has been established successfully.');
+
+        // Sync database in development mode
+        if (process.env.NODE_ENV === 'development') {
+            await sequelize.sync({ alter: true });
+            console.log('Database synchronized successfully.');
+        }
     } catch (error) {
         console.error('Unable to connect to the database:', error);
         process.exit(1);

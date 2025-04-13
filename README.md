@@ -27,6 +27,10 @@ A Node.js application with PostgreSQL database hosted on Google Cloud SQL.
    - Configure networking (allow your IP address)
    - Create the instance
 
+# run in a separate terminal ./cloud-sql-proxy storygrid:us-central1:storygrid-dev-db-instance-2026 --port 3306
+
+# before running npm run dev
+
 ### 2. Database Configuration
 
 1. Get your instance connection information:

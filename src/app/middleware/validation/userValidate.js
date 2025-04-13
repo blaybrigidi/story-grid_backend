@@ -8,6 +8,16 @@ export const signUp = [
         .notEmpty()
         .withMessage('Email is required'),
     
+    body('data.username')
+        .isString()
+        .withMessage('Username must be a string')
+        .isLength({ min: 3, max: 30 })
+        .withMessage('Username must be between 3 and 30 characters')
+        .matches(/^[a-zA-Z0-9_-]+$/)
+        .withMessage('Username can only contain letters, numbers, underscores, and hyphens')
+        .notEmpty()
+        .withMessage('Username is required'),
+    
     body('data.password')
         .isLength({ min: 8 })
         .withMessage('Password must be at least 8 characters long')
@@ -19,14 +29,17 @@ export const signUp = [
     body('data.firstName')
         .isString()
         .withMessage('First name must be a string')
-        .notEmpty()
-        .withMessage('First name is required'),
+        .optional(),
     
     body('data.lastName')
         .isString()
         .withMessage('Last name must be a string')
-        .notEmpty()
-        .withMessage('Last name is required'),
+        .optional(),
+    
+    body('data.phoneNumber')
+        .isString()
+        .withMessage('Phone number must be a string')
+        .optional(),
     
     (req, res, next) => {
         const errors = validationResult(req);

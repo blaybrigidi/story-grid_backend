@@ -11,14 +11,24 @@ class UserService {
      */
     async register(userData) {
         try {
-            const { email, password, firstName, lastName, country } = userData;
+            const { email, password, username, firstName, lastName, phoneNumber } = userData;
 
-            // Check if user already exists
-            const existingUser = await User.findOne({ where: { email } });
-            if (existingUser) {
+            // Check if user already exists with this email
+            const existingUserEmail = await User.findOne({ where: { email } });
+            if (existingUserEmail) {
                 return {
                     status: 400,
                     msg: 'User with this email already exists',
+                    data: null
+                };
+            }
+
+            // Check if username is taken
+            const existingUsername = await User.findOne({ where: { username } });
+            if (existingUsername) {
+                return {
+                    status: 400,
+                    msg: 'Username is already taken',
                     data: null
                 };
             }
@@ -30,17 +40,17 @@ class UserService {
             // Create new user
             const user = await User.create({
                 email,
+                username,
                 password: hashedPassword,
                 firstName,
                 lastName,
-                country,
-                role: 'user',
+                phoneNumber,
                 isBlocked: false
             });
 
             // Generate JWT token
             const token = jwt.sign(
-                { id: user.id, role: user.role },
+                { id: user.id },
                 process.env.JWT_SECRET,
                 { expiresIn: process.env.JWT_EXPIRES_IN }
             );
@@ -52,19 +62,25 @@ class UserService {
                     user: {
                         id: user.id,
                         email: user.email,
+                        username: user.username,
                         firstName: user.firstName,
                         lastName: user.lastName,
-                        role: user.role,
-                        country: user.country
+                        phoneNumber: user.phoneNumber
                     },
                     token
                 }
             };
         } catch (error) {
             console.error('Registration error:', error);
+            console.error('Error stack:', error.stack);
+            console.error('Error details:', {
+                name: error.name,
+                message: error.message,
+                code: error.code
+            });
             return {
                 status: 500,
-                msg: 'Registration failed',
+                msg: `Registration failed: ${error.message}`,
                 data: null
             };
         }
@@ -304,6 +320,69 @@ class UserService {
             return {
                 status: 500,
                 msg: 'Failed to change password',
+                data: null
+            };
+        }
+    }
+
+    async login(email, password) {
+        try {
+            // Find user
+            const user = await User.findOne({ where: { email } });
+            if (!user) {
+                return {
+                    status: 400,
+                    msg: 'Invalid credentials',
+                    data: null
+                };
+            }
+
+            // Check if user is blocked
+            if (user.isBlocked) {
+                return {
+                    status: 403,
+                    msg: 'Account is blocked. Please contact support.',
+                    data: null
+                };
+            }
+
+            // Verify password
+            const isValidPassword = await bcrypt.compare(password, user.password);
+            if (!isValidPassword) {
+                return {
+                    status: 400,
+                    msg: 'Invalid credentials',
+                    data: null
+                };
+            }
+
+            // Generate JWT token
+            const token = jwt.sign(
+                { id: user.id },
+                process.env.JWT_SECRET,
+                { expiresIn: process.env.JWT_EXPIRES_IN }
+            );
+
+            return {
+                status: 200,
+                msg: 'Login successful',
+                data: {
+                    token,
+                    user: {
+                        id: user.id,
+                        email: user.email,
+                        username: user.username,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                        phoneNumber: user.phoneNumber
+                    }
+                }
+            };
+        } catch (error) {
+            console.error('Login error:', error);
+            return {
+                status: 500,
+                msg: 'Login failed',
                 data: null
             };
         }

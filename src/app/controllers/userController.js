@@ -206,3 +206,34 @@ export const changePassword = async (req) => {
     };
   }
 };
+
+export const login = async (req) => {
+  try {
+    const { email, password } = req.body.data;
+    
+    // Validate required fields
+    if (!email || !password) {
+      return {
+        status: 400,
+        msg: "Email and password are required",
+        data: null
+      };
+    }
+    
+    // Call the userService to handle the login
+    const result = await userService.login(email, password);
+    
+    return {
+      status: result.status,
+      msg: result.msg,
+      data: result.data
+    };
+  } catch (error) {
+    console.error("Login error:", error);
+    return {
+      status: 500,
+      msg: "Internal Server Error",
+      data: null
+    };
+  }
+};
