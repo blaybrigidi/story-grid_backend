@@ -1,12 +1,19 @@
 /** @format */
-import friendService from '../services/friendService.js';
+import { 
+    sendFriendRequest as sendFriendRequestService, 
+    acceptFriendRequest as acceptFriendRequestService, 
+    getPendingRequests as getPendingRequestsService, 
+    getFriends as getFriendsService, 
+    rejectFriendRequest as rejectFriendRequestService, 
+    removeFriend as removeFriendService 
+} from '../services/friendService.js';
 
 export const sendFriendRequest = async (req, res, next) => {
     try {
         const { friendId } = req.body;
         const userId = req.user.id;
 
-        const result = await friendService.sendFriendRequest(userId, friendId);
+        const result = await sendFriendRequestService(userId, friendId);
         
         return {
             status: result.status || 200,
@@ -28,7 +35,7 @@ export const acceptFriendRequest = async (req, res, next) => {
         const { friendId } = req.params;
         const userId = req.user.id;
 
-        const result = await friendService.acceptFriendRequest(userId, friendId);
+        const result = await acceptFriendRequestService(userId, friendId);
         
         return {
             status: result.status || 200,
@@ -48,7 +55,7 @@ export const acceptFriendRequest = async (req, res, next) => {
 export const getPendingRequests = async (req, res, next) => {
     try {
         const userId = req.user.id;
-        const result = await friendService.getPendingRequests(userId);
+        const result = await getPendingRequestsService(userId);
         
         return {
             status: result.status || 200,
@@ -68,7 +75,7 @@ export const getPendingRequests = async (req, res, next) => {
 export const getFriends = async (req, res, next) => {
     try {
         const userId = req.user.id;
-        const result = await friendService.getFriends(userId);
+        const result = await getFriendsService(userId);
         
         return {
             status: result.status || 200,
@@ -90,7 +97,7 @@ export const rejectFriendRequest = async (req, res, next) => {
         const { friendId } = req.params;
         const userId = req.user.id;
 
-        const result = await friendService.rejectFriendRequest(userId, friendId);
+        const result = await rejectFriendRequestService(userId, friendId);
         
         return {
             status: result.status || 200,
@@ -112,7 +119,7 @@ export const removeFriend = async (req, res, next) => {
         const { friendId } = req.params;
         const userId = req.user.id;
 
-        const result = await friendService.removeFriend(userId, friendId);
+        const result = await removeFriendService(userId, friendId);
         
         return {
             status: result.status || 200,

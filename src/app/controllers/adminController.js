@@ -1,5 +1,5 @@
-import adminService from '../services/adminService.js';
-import userService from '../services/userService.js';
+// import { requestLogin as adminRequestLogin, verifyLogin as adminVerifyLogin } from '../services/adminService.js';
+// import { blockUser as blockUserService, unblockUser as unblockUserService } from '../services/userService.js';
 
 export const requestLogin = async (req) => {
   const { email, password } = req.body.data;
@@ -18,7 +18,7 @@ export const requestLogin = async (req) => {
 
   try {
     // Call service function to validate credentials and send OTP
-    const response = await adminService.requestLogin(email, password);
+    const response = await adminRequestLogin(email, password);
 
     if (response.status === 200) {
       console.log(`[SUCCESS] OTP sent to admin email: ${email}`);
@@ -58,7 +58,7 @@ export const verifyLogin = async (req) => {
 
   try {
     // Call service function to verify OTP and issue a JWT
-    const response = await adminService.verifyLogin(email, otp);
+    const response = await adminVerifyLogin(email, otp);
 
     if (response.status === 200) {
       console.log(`[SUCCESS] Admin login successful for email: ${email}`);
@@ -100,7 +100,7 @@ export const getDashboard = async (req) => {
             data: dashboardData
         };
     } catch (error) {
-        console.error('[ERROR] Failed to get dashboard data:', error);
+        console.error('Get dashboard error:', error);
         return {
             status: 500,
             msg: 'Failed to retrieve dashboard data',
@@ -111,11 +111,9 @@ export const getDashboard = async (req) => {
 
 export const getAllUsers = async (req) => {
     try {
-        // Placeholder for user list
-        const users = [
-            { id: 1, email: 'user1@example.com', firstName: 'John', lastName: 'Doe', isBlocked: false },
-            { id: 2, email: 'user2@example.com', firstName: 'Jane', lastName: 'Smith', isBlocked: true }
-        ];
+        const users = await User.findAll({
+            attributes: ['id', 'email', 'firstName', 'lastName', 'isActive', 'isBlocked', 'createdAt']
+        });
         
         return {
             status: 200,
@@ -123,7 +121,7 @@ export const getAllUsers = async (req) => {
             data: users
         };
     } catch (error) {
-        console.error('[ERROR] Failed to get users:', error);
+        console.error('Get users error:', error);
         return {
             status: 500,
             msg: 'Failed to retrieve users',
@@ -135,17 +133,15 @@ export const getAllUsers = async (req) => {
 export const blockUser = async (req) => {
     try {
         const { userId } = req.params;
-        
-        // Placeholder for blocking user
-        console.log(`Blocking user with ID: ${userId}`);
+        const response = await blockUserService(userId);
         
         return {
-            status: 200,
-            msg: 'User blocked successfully',
-            data: null
+            status: response.status,
+            msg: response.msg,
+            data: response.data
         };
     } catch (error) {
-        console.error('[ERROR] Failed to block user:', error);
+        console.error('Block user error:', error);
         return {
             status: 500,
             msg: 'Failed to block user',
@@ -157,17 +153,15 @@ export const blockUser = async (req) => {
 export const unblockUser = async (req) => {
     try {
         const { userId } = req.params;
-        
-        // Placeholder for unblocking user
-        console.log(`Unblocking user with ID: ${userId}`);
+        const response = await unblockUserService(userId);
         
         return {
-            status: 200,
-            msg: 'User unblocked successfully',
-            data: null
+            status: response.status,
+            msg: response.msg,
+            data: response.data
         };
     } catch (error) {
-        console.error('[ERROR] Failed to unblock user:', error);
+        console.error('Unblock user error:', error);
         return {
             status: 500,
             msg: 'Failed to unblock user',

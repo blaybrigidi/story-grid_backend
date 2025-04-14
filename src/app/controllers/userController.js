@@ -1,5 +1,5 @@
 /** @format */
-import userService from '../services/userService.js';
+import { register, requestLogin as requestLoginService, verifyLogin as verifyLoginService, getProfile as getProfileService, updateProfile as updateProfileService, changePassword as changePasswordService, login as loginService } from '../services/userService.js';
 
 /**
  * Controller for user signup
@@ -19,7 +19,7 @@ export const signup = async (req) => {
       };
     }
     
-    const result = await userService.register(userData);
+    const result = await register(userData);
     
     return {
       status: result.status || 200,
@@ -55,7 +55,7 @@ export const requestLogin = async (req) => {
     }
     
     // Call the userService to handle the login request
-    const result = await userService.requestLogin(email, password);
+    const result = await requestLoginService(email, password);
     
     // Return the result in the specified format
     return {
@@ -93,7 +93,7 @@ export const verifyLogin = async (req) => {
     }
     
     // Call the userService to handle the OTP verification
-    const result = await userService.verifyLogin(email, otp);
+    const result = await verifyLoginService(email, otp);
     
     // Return the result in the specified format
     return {
@@ -120,11 +120,8 @@ export const verifyLogin = async (req) => {
 export const getProfile = async (req) => {
   try {
     const userId = req.user.id;
+    const result = await getProfileService(userId);
     
-    // Call the userService to get the user profile
-    const result = await userService.getProfile(userId);
-    
-    // Return the result in the specified format
     return {
       status: result.status,
       msg: result.msg,
@@ -150,10 +147,8 @@ export const updateProfile = async (req) => {
     const userId = req.user.id;
     const updateData = req.body.data;
     
-    // Call the userService to update the user profile
-    const result = await userService.updateProfile(userId, updateData);
+    const result = await updateProfileService(userId, updateData);
     
-    // Return the result in the specified format
     return {
       status: result.status,
       msg: result.msg,
@@ -179,7 +174,6 @@ export const changePassword = async (req) => {
     const userId = req.user.id;
     const { currentPassword, newPassword } = req.body.data;
     
-    // Validate required fields
     if (!currentPassword || !newPassword) {
       return {
         status: 400,
@@ -188,10 +182,8 @@ export const changePassword = async (req) => {
       };
     }
     
-    // Call the userService to change the password
-    const result = await userService.changePassword(userId, currentPassword, newPassword);
+    const result = await changePasswordService(userId, currentPassword, newPassword);
     
-    // Return the result in the specified format
     return {
       status: result.status,
       msg: result.msg,
@@ -207,11 +199,15 @@ export const changePassword = async (req) => {
   }
 };
 
+/**
+ * Controller for user login
+ * @param {Object} req - Express request object
+ * @returns {Object} - Response object with status, message, and data
+ */
 export const login = async (req) => {
   try {
     const { email, password } = req.body.data;
     
-    // Validate required fields
     if (!email || !password) {
       return {
         status: 400,
@@ -220,8 +216,7 @@ export const login = async (req) => {
       };
     }
     
-    // Call the userService to handle the login
-    const result = await userService.login(email, password);
+    const result = await loginService(email, password);
     
     return {
       status: result.status,

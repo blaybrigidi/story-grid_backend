@@ -27,47 +27,11 @@ export const authenticateToken = (req, res, next) => {
     });
 };
 
-// Handle Google OAuth callback
-export const googleCallback = async (req) => {
-    try {
-        const user = req.user;
-        
-        // Generate JWT token
-        const token = jwt.sign(
-            { id: user.id, email: user.email },
-            process.env.JWT_SECRET,
-            { expiresIn: '24h' }
-        );
-
-        return {
-            status: 200,
-            msg: 'Google authentication successful',
-            data: {
-                user: {
-                    id: user.id,
-                    email: user.email,
-                    firstName: user.firstName,
-                    lastName: user.lastName,
-                    profilePicture: user.profilePicture
-                },
-                token
-            }
-        };
-    } catch (error) {
-        console.error('Google callback error:', error);
-        return {
-            status: 500,
-            msg: 'Authentication failed',
-            data: null
-        };
-    }
-};
-
 // Get current user info
 export const getCurrentUser = async (req) => {
     try {
         const user = await User.findByPk(req.user.id, {
-            attributes: ['id', 'email', 'firstName', 'lastName', 'profilePicture']
+            attributes: ['id', 'email', 'username', 'role']
         });
 
         if (!user) {

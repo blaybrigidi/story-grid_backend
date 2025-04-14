@@ -1,51 +1,34 @@
 # StoryGrid Application
 
-A Node.js application with PostgreSQL database hosted on Google Cloud SQL.
+A Node.js application with PostgreSQL database hosted on Neon.
 
 ## Prerequisites
 
 - Node.js (v14 or higher)
 - npm or yarn
-- Google Cloud account
-- Google Cloud SQL instance
+- Neon account
 - PostgreSQL client (optional, for direct database access)
-- Google Cloud SDK (gcloud CLI)
 - Git
 
 ## Setup Instructions
 
-### 1. Google Cloud SQL Setup
+### 1. Neon Database Setup
 
-1. Go to the [Google Cloud Console](https://console.cloud.google.com)
+1. Go to the [Neon Console](https://console.neon.tech)
 2. Create a new project or select an existing one
-3. Enable the Cloud SQL Admin API
-4. Create a new Cloud SQL instance:
-   - Choose PostgreSQL
-   - Select your preferred region
-   - Choose a machine type (start with db-f1-micro for development)
-   - Set up your root password
-   - Configure networking (allow your IP address)
-   - Create the instance
-
-# run in a separate terminal ./cloud-sql-proxy storygrid:us-central1:storygrid-dev-db-instance-2026 --port 3306
-
-# before running npm run dev
+3. Create a new database (or use the default one)
+4. Get your connection string from the Neon dashboard
 
 ### 2. Database Configuration
 
-1. Get your instance connection information:
-
-   - Instance IP address
-   - Database name
-   - Username and password
-
-2. Update the `.env` file with your database credentials:
+1. Update the `.env` file with your Neon database credentials:
    ```
-   DB_NAME=your_database_name
-   DB_USER=your_username
+   DB_NAME=storygrid_db
+   DB_USER=neondb_owner
    DB_PASSWORD=your_password
-   DB_HOST=your_instance_ip
+   DB_HOST=your_neon_host.aws.neon.tech
    DB_PORT=5432
+   DB_DIALECT=postgres
    DB_SSL=true
    ```
 
@@ -57,167 +40,91 @@ A Node.js application with PostgreSQL database hosted on Google Cloud SQL.
    npm install
    ```
 
-2. Run database migrations:
+2. Create database tables:
 
    ```bash
-   npm run migrate
+   npm run create-tables
    ```
 
-3. Start the application:
+3. (Optional) Create test users:
+
+   ```bash
+   npm run create-test-users
+   ```
+
+4. Start the application:
    ```bash
    npm start
    ```
 
 ### 4. Connecting to the Database
 
-#### Using gcloud CLI
+#### Using Neon Connection String
 
-1. Install the Google Cloud SDK from [here](https://cloud.google.com/sdk/docs/install)
-
-2. Initialize gcloud and authenticate:
-
-   ```bash
-   gcloud init
-   gcloud auth login
+1. Get your connection string from the Neon dashboard
+2. Use it with any PostgreSQL client:
+   ```
+   postgresql://username:password@hostname/database?sslmode=require
    ```
 
-3. Set your project:
+### 5. Environment Variables
 
-   ```bash
-   gcloud config set project storygrid
-   ```
+Check the .env file for the related details
 
-4. List your Cloud SQL instances:
+````
 
-   ```bash
-   gcloud sql instances list --project storygrid
-   ```
+### 6. API Endpoints
 
-5. Connect to your instance:
-   ```bash
-   gcloud sql connect storygrid-dev-db-instance-2026 --user=root
-   ```
-   Note: This will temporarily allowlist your IP address for 5 minutes.
+#### Authentication
 
-#### Using Cloud SQL Proxy (Recommended for Production)
+- POST `/api/auth/register` - Register a new user
+- POST `/api/auth/login` - Login user
+- GET `/api/auth/user` - Get current user info
+- POST `/api/auth/logout` - Logout user
 
-1. Download and install the Cloud SQL Proxy:
+#### Stories
 
-   ```bash
-   curl -o cloud-sql-proxy https://dl.google.com/cloudsql/cloud-sql-proxy.linux.amd64
-   chmod +x cloud-sql-proxy
-   ```
+- GET `/api/stories` - Get all stories
+- GET `/api/stories/:id` - Get a specific story
+- POST `/api/stories` - Create a new story
+- PUT `/api/stories/:id` - Update a story
+- DELETE `/api/stories/:id` - Delete a story
 
-2. Start the proxy:
+#### Comments
 
-   ```bash
-   ./cloud-sql-proxy storygrid:us-central1-a:storygrid-dev-db-instance-2026
-   ```
+- GET `/api/stories/:storyId/comments` - Get comments for a story
+- POST `/api/stories/:storyId/comments` - Add a comment to a story
+- PUT `/api/comments/:id` - Update a comment
+- DELETE `/api/comments/:id` - Delete a comment
 
-3. Connect to the database using a PostgreSQL client:
-   ```bash
-   psql -h 127.0.0.1 -U your_username -d your_database_name
-   ```
+#### Likes
 
-### 5. GitHub Repository Setup
+- POST `/api/stories/:storyId/like` - Like a story
+- DELETE `/api/stories/:storyId/like` - Unlike a story
 
-1. Initialize Git in your project (if not already done):
+#### Friendships
 
-   ```bash
-   git init
-   ```
+- GET `/api/friends` - Get user's friends
+- POST `/api/friends/:friendId` - Send friend request
+- PUT `/api/friends/:friendId` - Accept/reject friend request
+- DELETE `/api/friends/:friendId` - Remove friend
 
-2. Create a `.gitignore` file to exclude sensitive files:
+### 7. Development
 
-   ```
-   # Dependencies
-   node_modules/
-   npm-debug.log
-   yarn-debug.log
-   yarn-error.log
+To run the application in development mode with hot reloading:
 
-   # Environment variables
-   .env
-   .env.local
-   .env.*.local
+```bash
+npm run dev
+````
 
-   # IDE
-   .idea/
-   .vscode/
-   *.swp
-   *.swo
+### 8. Testing
 
-   # OS
-   .DS_Store
-   Thumbs.db
+To run tests:
 
-   # Logs
-   logs/
-   *.log
+```bash
+npm test
+```
 
-   # Build output
-   dist/
-   build/
-   ```
+## License
 
-3. Add your files and make your first commit:
-
-   ```bash
-   git add .
-   git commit -m "Initial commit"
-   ```
-
-4. Connect to your GitHub repository:
-
-   ```bash
-   git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-   git branch -M main
-   git push -u origin main
-   ```
-
-5. For subsequent updates:
-   ```bash
-   git add .
-   git commit -m "Your commit message"
-   git push
-   ```
-
-Note: Make sure to never commit sensitive information like API keys, database credentials, or environment variables. Always use the `.env` file for such configurations.
-
-## Environment Variables
-
-The following environment variables are required:
-
-- `DB_NAME`: Database name
-- `DB_USER`: Database username
-- `DB_PASSWORD`: Database password
-- `DB_HOST`: Database host (Google Cloud SQL instance IP)
-- `DB_PORT`: Database port (default: 5432)
-- `DB_SSL`: Enable SSL for database connection (true/false)
-- `NODE_ENV`: Application environment (development/production)
-- `JWT_SECRET`: Secret key for JWT token generation
-- `JWT_EXPIRES_IN`: JWT token expiration time
-- `EMAIL_SERVICE`: Email service provider
-- `EMAIL_USER`: Email address for sending OTP
-- `EMAIL_PASSWORD`: Email password or app-specific password
-
-## Security Notes
-
-1. Never commit the `.env` file to version control
-2. Use strong passwords for database access
-3. Configure Google Cloud SQL firewall rules to allow only necessary IP addresses
-4. Enable SSL for database connections in production
-5. Regularly rotate database credentials and JWT secrets
-6. For production environments, use Cloud SQL Proxy instead of direct connections
-
-## Troubleshooting
-
-If you encounter connection issues:
-
-1. Verify your Google Cloud SQL instance is running
-2. Check your firewall rules in Google Cloud Console
-3. Ensure your database credentials are correct
-4. Verify SSL configuration if enabled
-5. Check the application logs for detailed error messages
-6. If using gcloud CLI, ensure your IP is allowlisted
-7. For Cloud SQL Proxy issues, check the proxy logs and ensure you have the correct instance connection name
+ISC

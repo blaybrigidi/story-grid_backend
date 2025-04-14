@@ -13,7 +13,7 @@ const sequelize = new Sequelize(
     {
         host: process.env.DB_HOST,
         port: process.env.DB_PORT,
-        dialect: 'mysql',
+        dialect: 'postgres',
         logging: (msg) => console.log(`[Sequelize] ${msg}`),
         dialectOptions: {
             connectTimeout: 60000, // 60 seconds
@@ -38,6 +38,7 @@ const testConnection = async () => {
         console.log(`Port: ${process.env.DB_PORT}`);
         console.log(`Database: ${process.env.DB_NAME}`);
         console.log(`User: ${process.env.DB_USER}`);
+        console.log(`Dialect: postgres`);
         
         await sequelize.authenticate();
         console.log('Database connection has been established successfully.');

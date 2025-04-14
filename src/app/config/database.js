@@ -4,13 +4,13 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const sequelize = new Sequelize(
-    process.env.DB_NAME || 'storygrid',
-    process.env.DB_USER || 'root',
+    process.env.DB_NAME || 'neondb',
+    process.env.DB_USER || 'postgres',
     process.env.DB_PASSWORD || '',
     {
         host: process.env.DB_HOST || 'localhost',
-        dialect: process.env.DB_DIALECT || 'mysql',
-        port: process.env.DB_PORT || 3306,
+        dialect: process.env.DB_DIALECT || 'postgres',
+        port: process.env.DB_PORT || 5432,
         logging: (msg) => console.log(`[Sequelize] ${msg}`),
         dialectOptions: {
             connectTimeout: 60000, // 60 seconds
@@ -35,6 +35,7 @@ const testConnection = async () => {
         console.log(`Port: ${process.env.DB_PORT}`);
         console.log(`Database: ${process.env.DB_NAME}`);
         console.log(`User: ${process.env.DB_USER}`);
+        console.log(`Dialect: ${process.env.DB_DIALECT}`);
         
         await sequelize.authenticate();
         console.log('Database connection has been established successfully.');
