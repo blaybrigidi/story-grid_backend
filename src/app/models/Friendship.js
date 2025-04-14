@@ -1,6 +1,5 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
-import User from './User.js';
 
 const Friendship = sequelize.define('Friendship', {
     id: {
@@ -12,7 +11,7 @@ const Friendship = sequelize.define('Friendship', {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-            model: User,
+            model: 'Users', // Use table name as a string
             key: 'id'
         }
     },
@@ -20,7 +19,7 @@ const Friendship = sequelize.define('Friendship', {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-            model: User,
+            model: 'Users', // Use table name as a string
             key: 'id'
         }
     },
@@ -38,8 +37,10 @@ const Friendship = sequelize.define('Friendship', {
     ]
 });
 
-// Define associations
-Friendship.belongsTo(User, { as: 'user', foreignKey: 'userId' });
-Friendship.belongsTo(User, { as: 'friend', foreignKey: 'friendId' });
+// Lazily load models to define associations
+import('./User.js').then(({ default: User }) => {
+    Friendship.belongsTo(User, { as: 'user', foreignKey: 'userId' });
+    Friendship.belongsTo(User, { as: 'friend', foreignKey: 'friendId' });
+});
 
-export default Friendship; 
+export default Friendship;

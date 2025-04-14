@@ -1,7 +1,5 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
-import Story from './Story.js';
-import User from './User.js';
 
 const Like = sequelize.define('Like', {
     id: {
@@ -13,7 +11,7 @@ const Like = sequelize.define('Like', {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-            model: Story,
+            model: 'Stories', // Use table name as a string
             key: 'id'
         }
     },
@@ -21,28 +19,25 @@ const Like = sequelize.define('Like', {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-            model: User,
+            model: 'Users', // Use table name as a string
             key: 'id'
         }
     }
 }, {
     timestamps: true,
     indexes: [
-        {
-            unique: true,
-            fields: ['storyId', 'userId']
-        },
-        {
-            fields: ['storyId']
-        },
-        {
-            fields: ['userId']
-        }
+        { unique: true, fields: ['storyId', 'userId'] },
+        { fields: ['storyId'] },
+        { fields: ['userId'] }
     ]
 });
 
-// Define associations
-Like.belongsTo(Story, { as: 'story', foreignKey: 'storyId' });
-Like.belongsTo(User, { as: 'user', foreignKey: 'userId' });
+// Lazily load models to define associations
+import('./Story.js').then(({ default: Story }) => {
+    Like.belongsTo(Story, { as: 'story', foreignKey: 'storyId' });
+});
+import('./User.js').then(({ default: User }) => {
+    Like.belongsTo(User, { as: 'user', foreignKey: 'userId' });
+});
 
-export default Like; 
+export default Like;
