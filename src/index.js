@@ -5,7 +5,7 @@ import helmet from "helmet";
 import cors from 'cors';
 import passport from 'passport';
 import './app/config/passport.js';
-import decryptReq from "./app/helper/decryptingReq.js";
+// import decryptReq from "./app/helper/decryptingReq.js";
 import initializeRoutes from "./routes/index.js";
 import sequelize from "./config/db_connect.js";
 import { testConnection } from './config/db_connect.js';
@@ -35,7 +35,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 // Decrypt request middleware
-decryptReq(app);
+// decryptReq(app);
 
 // Initialize Passport
 app.use(passport.initialize());
