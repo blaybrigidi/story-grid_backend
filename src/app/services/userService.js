@@ -2,14 +2,17 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { sendOTP } from '../utils/email.js';
+import { generateToken, verifyPassword, hashPassword } from '../helper/secure.js';
 
 export const register = async (userData) => {
     try {
+        console.log('Registering user with data:', JSON.stringify(userData, null, 2));
         const { email, password, username, firstName, lastName, phoneNumber } = userData;
 
         // Check if user already exists with this email
         const existingUserEmail = await User.findOne({ where: { email } });
         if (existingUserEmail) {
+            console.log('User with email already exists:', email);
             return {
                 status: 400,
                 msg: 'User with this email already exists',
@@ -20,6 +23,7 @@ export const register = async (userData) => {
         // Check if username is taken
         const existingUsername = await User.findOne({ where: { username } });
         if (existingUsername) {
+            console.log('Username already taken:', username);
             return {
                 status: 400,
                 msg: 'Username is already taken',
@@ -27,27 +31,22 @@ export const register = async (userData) => {
             };
         }
 
-        // Hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        // Create new user
+        console.log('Creating new user with username:', username);
+        // Create new user - password will be hashed by the User model's beforeCreate hook
         const user = await User.create({
-            email,
             username,
-            password: hashedPassword,
+            email,
+            password, // Pass the plain password, let the model hash it
             firstName,
             lastName,
-            phoneNumber,
-            isBlocked: false
+            phoneNumber
         });
+        console.log('User created successfully with ID:', user.id);
 
         // Generate JWT token
-        const token = jwt.sign(
-            { id: user.id },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN }
-        );
+        console.log('Generating token for user:', user.id);
+        const token = generateToken(user);
+        console.log('Token generated successfully');
 
         return {
             status: 201,
@@ -65,7 +64,7 @@ export const register = async (userData) => {
             }
         };
     } catch (error) {
-        console.error('Registration error:', error);
+        console.error('Register error:', error);
         console.error('Error stack:', error.stack);
         console.error('Error details:', {
             name: error.name,
@@ -282,62 +281,71 @@ export const changePassword = async (userId, currentPassword, newPassword) => {
 
 export const login = async (email, password) => {
     try {
+        console.log('Login attempt for email:', email);
+        console.log('Password provided:', password);
+        
+        // Find user by email
         const user = await User.findOne({ where: { email } });
         if (!user) {
+            console.log('User not found with email:', email);
             return {
-                status: 400,
-                msg: 'Invalid credentials',
+                status: 401,
+                msg: "Invalid credentials",
                 data: null
             };
         }
-
-        // Check if user is blocked
+        
+        console.log('User found:', user.id);
+        console.log('Username:', user.username);
+        console.log('Stored password hash:', user.password);
+        console.log('Password hash length:', user.password.length);
+        console.log('Password hash format:', user.password.startsWith('$2a$') ? 'bcrypt' : 'unknown');
+        
+        // Check if account is blocked
         if (user.isBlocked) {
+            console.log('User account is blocked:', user.id);
             return {
                 status: 403,
-                msg: 'Account is blocked. Please contact support.',
+                msg: "Account is blocked",
                 data: null
             };
         }
-
-        // Verify password
-        const isValidPassword = await bcrypt.compare(password, user.password);
-        if (!isValidPassword) {
+        
+        // Verify password using bcrypt directly
+        console.log('Verifying password for user:', user.id);
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        console.log('Password verification result:', isPasswordValid);
+        
+        if (!isPasswordValid) {
+            console.log('Invalid password for user:', user.id);
             return {
-                status: 400,
-                msg: 'Invalid credentials',
+                status: 401,
+                msg: "Invalid credentials",
                 data: null
             };
         }
-
+        
         // Generate JWT token
-        const token = jwt.sign(
-            { id: user.id, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN }
-        );
-
+        const token = generateToken(user);
+        
         return {
             status: 200,
-            msg: 'Login successful',
+            msg: "Login successful",
             data: {
-                token,
                 user: {
                     id: user.id,
                     email: user.email,
+                    username: user.username,
                     firstName: user.firstName,
                     lastName: user.lastName,
-                    role: user.role,
-                    country: user.country
-                }
+                    phoneNumber: user.phoneNumber
+                },
+                token
             }
         };
     } catch (error) {
         console.error('Login error:', error);
-        return {
-            status: 500,
-            msg: 'Login failed',
-            data: null
-        };
+        console.error('Error stack:', error.stack);
+        throw error;
     }
 };
