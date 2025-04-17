@@ -9,7 +9,7 @@ const User = sequelize.define('User', {
     primaryKey: true
   },
   username: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(30),
     allowNull: false,
     unique: true,
     validate: {
@@ -28,6 +28,18 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING,
     allowNull: false
   },
+  firstName: {
+    type: DataTypes.STRING(50),
+    allowNull: true
+  },
+  lastName: {
+    type: DataTypes.STRING(50),
+    allowNull: true
+  },
+  phoneNumber: {
+    type: DataTypes.STRING(15),
+    allowNull: true
+  },
   isEmailVerified: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
@@ -41,6 +53,7 @@ const User = sequelize.define('User', {
     defaultValue: 'user'
   }
 }, {
+  timestamps: true,
   hooks: {
     beforeCreate: async (user) => {
       if (user.password) {
@@ -55,4 +68,4 @@ const User = sequelize.define('User', {
   }
 });
 
-export default User; 
+export default User;

@@ -1,7 +1,13 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import User from '../models/User.js';
 import { sendOTP } from '../utils/email.js';
+
+// Generate a secure JWT secret if not provided
+const getJwtSecret = () => {
+    return process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
+};
 
 export const register = async (userData) => {
     try {
@@ -42,11 +48,11 @@ export const register = async (userData) => {
             isBlocked: false
         });
 
-        // Generate JWT token
+        // Generate JWT token with proper secret
         const token = jwt.sign(
             { id: user.id },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN }
+            getJwtSecret(),
+            { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
         );
 
         return {
@@ -151,8 +157,8 @@ export const verifyLogin = async (email, otp) => {
         // Generate JWT token
         const token = jwt.sign(
             { id: user.id, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN }
+            getJwtSecret(),
+            { expiresIn: process.env.JWT_EXPIRES_IN || '24h' } // Provide a default value
         );
 
         return {
@@ -310,11 +316,11 @@ export const login = async (email, password) => {
             };
         }
 
-        // Generate JWT token
+        // Generate JWT token with proper secret
         const token = jwt.sign(
             { id: user.id, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN }
+            getJwtSecret(),
+            { expiresIn: process.env.JWT_EXPIRES_IN || '24h' } // Provide a default value
         );
 
         return {
