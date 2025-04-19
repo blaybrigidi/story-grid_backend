@@ -27,6 +27,7 @@ const User = sequelize.define('User', {
   password: {
     type: DataTypes.STRING,
     allowNull: false
+    // Remove the set function to prevent double hashing
   },
   firstName: {
     type: DataTypes.STRING(50),
@@ -54,18 +55,8 @@ const User = sequelize.define('User', {
   }
 }, {
   timestamps: true,
-  hooks: {
-    beforeCreate: async (user) => {
-      if (user.password) {
-        user.password = await bcrypt.hash(user.password, 10);
-      }
-    },
-    beforeUpdate: async (user) => {
-      if (user.changed('password')) {
-        user.password = await bcrypt.hash(user.password, 10);
-      }
-    }
-  }
+  // Remove the hooks since we're handling password hashing in the setter
+  hooks: {}
 });
 
 export default User;

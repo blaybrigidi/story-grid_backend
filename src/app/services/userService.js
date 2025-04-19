@@ -288,8 +288,34 @@ export const changePassword = async (userId, currentPassword, newPassword) => {
 
 export const login = async (email, password) => {
     try {
+        console.log('Login attempt details:', {
+            email,
+            passwordLength: password?.length
+        });
+        
         const user = await User.findOne({ where: { email } });
+        console.log('User details:', {
+            found: !!user,
+            hashedPasswordLength: user?.password?.length,
+        });
+        
         if (!user) {
+            return {
+                status: 400,
+                msg: 'Invalid credentials',
+                data: null
+            };
+        }
+
+        // Check password
+        const isValidPassword = await bcrypt.compare(password, user.password);
+        console.log('Password comparison:', {
+            inputPasswordLength: password?.length,
+            storedHashLength: user.password?.length,
+            isValid: isValidPassword
+        });
+
+        if (!isValidPassword) {
             return {
                 status: 400,
                 msg: 'Invalid credentials',
@@ -306,36 +332,27 @@ export const login = async (email, password) => {
             };
         }
 
-        // Verify password
-        const isValidPassword = await bcrypt.compare(password, user.password);
-        if (!isValidPassword) {
-            return {
-                status: 400,
-                msg: 'Invalid credentials',
-                data: null
-            };
-        }
-
-        // Generate JWT token with proper secret
+        // Generate JWT token using same secret as registration
         const token = jwt.sign(
-            { id: user.id, role: user.role },
+            { id: user.id },
             getJwtSecret(),
-            { expiresIn: process.env.JWT_EXPIRES_IN || '24h' } // Provide a default value
+            { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
         );
 
+        // Return same user data structure as registration
         return {
             status: 200,
             msg: 'Login successful',
             data: {
-                token,
                 user: {
                     id: user.id,
                     email: user.email,
+                    username: user.username,
                     firstName: user.firstName,
                     lastName: user.lastName,
-                    role: user.role,
-                    country: user.country
-                }
+                    phoneNumber: user.phoneNumber
+                },
+                token
             }
         };
     } catch (error) {
