@@ -1,9 +1,5 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
-import User from './User.js';
-import Media from './Media.js';
-import Comment from './Comment.js';
-import Like from './Like.js';
 
 const Story = sequelize.define('Story', {
     id: {
@@ -15,7 +11,7 @@ const Story = sequelize.define('Story', {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-            model: User,
+            model: 'Users', // Use table name as a string
             key: 'id'
         }
     },
@@ -59,25 +55,25 @@ const Story = sequelize.define('Story', {
 }, {
     timestamps: true,
     indexes: [
-        {
-            fields: ['userId']
-        },
-        {
-            fields: ['status']
-        },
-        {
-            fields: ['category']
-        },
-        {
-            fields: ['publishedAt']
-        }
+        { fields: ['userId'] },
+        { fields: ['status'] },
+        { fields: ['category'] },
+        { fields: ['publishedAt'] }
     ]
 });
 
-// Define associations
-Story.belongsTo(User, { as: 'author', foreignKey: 'userId' });
-Story.hasMany(Media, { as: 'media', foreignKey: 'storyId' });
-Story.hasMany(Comment, { as: 'comments', foreignKey: 'storyId' });
-Story.hasMany(Like, { as: 'likes', foreignKey: 'storyId' });
+// Lazily load models to define associations
+import('./User.js').then(({ default: User }) => {
+    Story.belongsTo(User, { as: 'author', foreignKey: 'userId' });
+});
+import('./Media.js').then(({ default: Media }) => {
+    Story.hasMany(Media, { as: 'media', foreignKey: 'storyId' });
+});
+import('./Comment.js').then(({ default: Comment }) => {
+    Story.hasMany(Comment, { as: 'comments', foreignKey: 'storyId' });
+});
+import('./Like.js').then(({ default: Like }) => {
+    Story.hasMany(Like, { as: 'likes', foreignKey: 'storyId' });
+});
 
-export default Story; 
+export default Story;

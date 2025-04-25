@@ -30,12 +30,16 @@ export default (controllerFunction) => async (request, response, next) => {
         }
 
         if (!response.headersSent) {
-            return response.status(+result.status).json({
+            // Set a custom header to indicate this is an encrypted response
+            response.setHeader('x-encrypted', 'true');
+            
+            // Return the response as a string, not as JSON
+            return response.status(+result.status).send(JSON.stringify({
                 status: result.status,
                 msg: result.msg,
                 meta: result.meta,
                 data: encrypted_response,
-            });
+            }));
         }
     } catch (error) {
         console.error("Error in response handler:", error);

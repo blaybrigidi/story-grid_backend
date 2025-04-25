@@ -1,13 +1,13 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
 
-const Like = sequelize.define('Like', {
+const Friend = sequelize.define('Friend', {
     id: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true
     },
-    userId: {
+    followerId: {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
@@ -15,31 +15,32 @@ const Like = sequelize.define('Like', {
             key: 'id'
         }
     },
-    storyId: {
+    followingId: {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-            model: 'Stories',
+            model: 'Users',
             key: 'id'
         }
+    },
+    status: {
+        type: DataTypes.ENUM('pending', 'approved', 'rejected', 'blocked'),
+        defaultValue: 'pending'
     }
 }, {
     timestamps: true,
     indexes: [
         {
             unique: true,
-            fields: ['userId', 'storyId']
+            fields: ['followerId', 'followingId']
         }
     ]
 });
 
 // Lazily load models to avoid circular dependencies
 import('./User.js').then(({ default: User }) => {
-    Like.belongsTo(User, { foreignKey: 'userId' });
+    Friend.belongsTo(User, { as: 'follower', foreignKey: 'followerId' });
+    Friend.belongsTo(User, { as: 'following', foreignKey: 'followingId' });
 });
 
-import('./Story.js').then(({ default: Story }) => {
-    Like.belongsTo(Story, { foreignKey: 'storyId' });
-});
-
-export default Like;
+export default Friend; 

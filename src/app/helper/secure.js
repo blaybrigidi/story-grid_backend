@@ -1,4 +1,6 @@
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'your-fallback-encryption-key-32-chars-long'; // 32 bytes
 const IV_LENGTH = 16; // For AES, this is always 16
@@ -42,12 +44,43 @@ export const decrypt = (text) => {
 };
 
 /**
- * Generates a secure random token
- * @param {number} length - Length of the token
+ * Generates a secure random token or JWT token
+ * @param {number|Object} param - Length of the token or user object for JWT
  * @returns {string} - Generated token
  */
-export const generateToken = (length = 32) => {
-    return crypto.randomBytes(length).toString('hex');
+export const generateToken = (param) => {
+    console.log('Generating token with param type:', typeof param);
+    
+    if (typeof param === 'number') {
+        console.log('Generating random token with length:', param);
+        return crypto.randomBytes(param).toString('hex');
+    }
+    
+    // If param is a user object, generate JWT token
+    console.log('Generating JWT token for user:', param.id);
+    const user = param;
+    
+    if (!process.env.JWT_SECRET) {
+        console.error('JWT_SECRET is not defined in environment variables');
+        throw new Error('JWT_SECRET is not defined');
+    }
+    
+    try {
+        const token = jwt.sign(
+            { 
+                id: user.id,
+                email: user.email,
+                role: user.role
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+        console.log('JWT token generated successfully');
+        return token;
+    } catch (error) {
+        console.error('Error generating JWT token:', error);
+        throw error;
+    }
 };
 
 /**
@@ -56,18 +89,42 @@ export const generateToken = (length = 32) => {
  * @returns {Promise<string>} - Hashed password
  */
 export const hashPassword = async (password) => {
-    const salt = await crypto.randomBytes(16).toString('hex');
-    return crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex') + ':' + salt;
+    console.log('Hashing password with bcrypt:', password);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    console.log('Bcrypt hashed password:', hashedPassword);
+    return hashedPassword;
 };
 
 /**
  * Verifies a password against a hash
  * @param {string} password - Password to verify
  * @param {string} hash - Hash to verify against
- * @returns {boolean} - Whether the password matches
+ * @returns {Promise<boolean>} - Whether the password matches
  */
-export const verifyPassword = (password, hash) => {
-    const [hashedPassword, salt] = hash.split(':');
-    const verifyHash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
-    return hashedPassword === verifyHash;
+export const verifyPassword = async (password, hash) => {
+    console.log('Verifying password with bcrypt:');
+    console.log('Password to verify:', password);
+    console.log('Stored hash:', hash);
+    
+    // Try bcrypt verification
+    const bcryptResult = await bcrypt.compare(password, hash);
+    console.log('Bcrypt verification result:', bcryptResult);
+    
+    // Also try PBKDF2 for comparison
+    try {
+        const [pbkdf2Hash, salt] = hash.split(':');
+        if (pbkdf2Hash && salt) {
+            console.log('Attempting PBKDF2 verification:');
+            console.log('PBKDF2 hash part:', pbkdf2Hash);
+            console.log('PBKDF2 salt part:', salt);
+            const verifyHash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+            console.log('PBKDF2 computed hash:', verifyHash);
+            const pbkdf2Result = pbkdf2Hash === verifyHash;
+            console.log('PBKDF2 verification result:', pbkdf2Result);
+        }
+    } catch (error) {
+        console.log('PBKDF2 verification error:', error.message);
+    }
+    
+    return bcryptResult;
 }; 

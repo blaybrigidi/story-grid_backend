@@ -1,5 +1,4 @@
-// import { requestLogin as adminRequestLogin, verifyLogin as adminVerifyLogin } from '../services/adminService.js';
-// import { blockUser as blockUserService, unblockUser as unblockUserService } from '../services/userService.js';
+import { requestLogin as adminRequestLogin, verifyLogin as adminVerifyLogin } from '../services/adminService.js';
 
 export const requestLogin = async (req) => {
   const { email, password } = req.body.data;

@@ -1,6 +1,5 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
-import Story from './Story.js';
 
 const Media = sequelize.define('Media', {
     id: {
@@ -10,9 +9,9 @@ const Media = sequelize.define('Media', {
     },
     storyId: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
         references: {
-            model: Story,
+            model: 'Stories', // Use the table name as a string to avoid circular dependency
             key: 'id'
         }
     },
@@ -46,7 +45,9 @@ const Media = sequelize.define('Media', {
     ]
 });
 
-// Define associations
-Media.belongsTo(Story, { as: 'story', foreignKey: 'storyId' });
+// Lazily load the Story model to define the association
+import('./Story.js').then(({ default: Story }) => {
+    Media.belongsTo(Story, { as: 'story', foreignKey: 'storyId' });
+});
 
-export default Media; 
+export default Media;
