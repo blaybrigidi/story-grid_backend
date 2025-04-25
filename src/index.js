@@ -14,6 +14,7 @@ import userRoutes from './routes/userRoute.js';
 import adminRoutes from './routes/adminRoute.js';
 import friendRoutes from './routes/friendRoute.js';
 import authRoutes from './routes/authRoute.js';
+import errorHandler from './app/middleware/errorHandler.js';
 
 // Load environment variables
 // dotenv.config();
@@ -28,11 +29,19 @@ app.set("trust proxy", 1);
 app.use(helmet());
 
 // Body parsers
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // CORS setup
-app.use(cors());
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || '*', // Allow requests from your frontend domain
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  credentials: true,
+  maxAge: 86400 // 24 hours
+};
+app.use(cors(corsOptions));
 
 // Decrypt request middleware
 // decryptReq(app);
@@ -125,15 +134,8 @@ app.all("*", (req, res) => {
     res.status(404).json({ status: 404, msg: "Not Found", data: null });
 });
 
-// Global error handler ✅ FIXED PARAMS
-app.use((err, req, res, next) => {
-    console.error("[ERROR] Global error caught:", err.message);
-    res.status(500).json({
-        status: 500,
-        msg: "Internal Server Error",
-        error: process.env.NODE_ENV === "development" ? err.message : undefined,
-    });
-});
+// Apply the improved error handler
+errorHandler(app);
 
 // Ping route (used by load balancers)
 router.get("/ping", (req, res) => {

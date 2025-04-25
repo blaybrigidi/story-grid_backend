@@ -3,6 +3,8 @@ import userRoutes from './userRoute.js';
 import friendRoutes from './friendRoute.js';
 import authRoutes from './authRoute.js';
 import utilRoutes from './utilRoute.js';
+import storyRoutes from './storyRoute.js';
+import mediaRoutes from './mediaRoute.js';
 import auth from '../app/middleware/auth.js';
 
 /**
@@ -22,6 +24,12 @@ export default function initializeRoutes(app, router) {
   
   // Mount friend routes
   friendRoutes(router, auth);
+
+  // Mount story routes
+  storyRoutes(router, auth);
+  
+  // Mount media routes
+  mediaRoutes(router, auth);
 
   // Mount utility routes (only in development)
   if (process.env.NODE_ENV === 'development') {

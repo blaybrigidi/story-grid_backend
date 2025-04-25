@@ -37,7 +37,7 @@ export const getStory = async (storyId, userId) => {
                 {
                     model: User,
                     as: 'author',
-                    attributes: ['id', 'firstName', 'lastName', 'profilePicture']
+                    attributes: ['id', 'username', 'email']
                 },
                 {
                     model: Media,
@@ -50,7 +50,7 @@ export const getStory = async (storyId, userId) => {
                     include: [{
                         model: User,
                         as: 'user',
-                        attributes: ['id', 'firstName', 'lastName', 'profilePicture']
+                        attributes: ['id', 'username', 'email']
                     }]
                 },
                 {
@@ -172,7 +172,7 @@ export const getStories = async (filters = {}, page = 1, limit = 10) => {
                 {
                     model: User,
                     as: 'author',
-                    attributes: ['id', 'firstName', 'lastName', 'profilePicture']
+                    attributes: ['id', 'username', 'email']
                 },
                 {
                     model: Media,
@@ -215,7 +215,7 @@ export const getTrendingStories = async (limit = 10) => {
                 {
                     model: User,
                     as: 'author',
-                    attributes: ['id', 'firstName', 'lastName', 'profilePicture']
+                    attributes: ['id', 'username', 'email']
                 },
                 {
                     model: Media,

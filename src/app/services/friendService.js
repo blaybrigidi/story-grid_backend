@@ -61,6 +61,11 @@ export const sendFriendRequest = async (userId, friendId) => {
 
 export const acceptFriendRequest = async (userId, friendId) => {
     try {
+        console.log('Accepting friend request:');
+        console.log('Current user ID (recipient):', userId);
+        console.log('Friend ID (sender):', friendId);
+        
+        // Find the pending request
         const friendship = await Friendship.findOne({
             where: {
                 userId: friendId,
@@ -68,6 +73,32 @@ export const acceptFriendRequest = async (userId, friendId) => {
                 status: 'pending'
             }
         });
+        
+        console.log('Friendship found:', friendship ? 'Yes' : 'No');
+        if (friendship) {
+            console.log('Friendship ID:', friendship.id);
+            console.log('Current status:', friendship.status);
+        } else {
+            // Try to find if there's any friendship record at all
+            const anyFriendship = await Friendship.findOne({
+                where: {
+                    [Op.or]: [
+                        { userId: friendId, friendId: userId },
+                        { userId, friendId }
+                    ]
+                }
+            });
+            
+            console.log('Any friendship found:', anyFriendship ? 'Yes' : 'No');
+            if (anyFriendship) {
+                console.log('Friendship details:', {
+                    id: anyFriendship.id,
+                    userId: anyFriendship.userId,
+                    friendId: anyFriendship.friendId,
+                    status: anyFriendship.status
+                });
+            }
+        }
 
         if (!friendship) {
             return {
@@ -79,6 +110,7 @@ export const acceptFriendRequest = async (userId, friendId) => {
 
         friendship.status = 'accepted';
         await friendship.save();
+        console.log('Friendship status updated to:', friendship.status);
 
         return {
             status: 200,
@@ -108,12 +140,12 @@ export const getFriends = async (userId) => {
                 {
                     model: User,
                     as: 'user',
-                    attributes: ['id', 'firstName', 'lastName', 'email']
+                    attributes: ['id', 'username', 'email']
                 },
                 {
                     model: User,
                     as: 'friend',
-                    attributes: ['id', 'firstName', 'lastName', 'email']
+                    attributes: ['id', 'username', 'email']
                 }
             ]
         });
@@ -123,8 +155,7 @@ export const getFriends = async (userId) => {
             const friend = friendship.userId === userId ? friendship.friend : friendship.user;
             return {
                 id: friend.id,
-                firstName: friend.firstName,
-                lastName: friend.lastName,
+                username: friend.username,
                 email: friend.email
             };
         });
@@ -151,13 +182,11 @@ export const getPendingRequests = async (userId) => {
                 friendId: userId,
                 status: 'pending'
             },
-            include: [
-                {
-                    model: User,
-                    as: 'user',
-                    attributes: ['id', 'firstName', 'lastName', 'email']
-                }
-            ]
+            include: [{
+                model: User,
+                as: 'user',
+                attributes: ['id', 'username', 'email']
+            }]
         });
 
         return {

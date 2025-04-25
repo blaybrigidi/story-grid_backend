@@ -9,7 +9,7 @@ const Media = sequelize.define('Media', {
     },
     storyId: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
         references: {
             model: 'Stories', // Use the table name as a string to avoid circular dependency
             key: 'id'
