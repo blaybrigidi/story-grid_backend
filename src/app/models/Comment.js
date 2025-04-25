@@ -11,7 +11,7 @@ const Comment = sequelize.define('Comment', {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-            model: 'Stories', // Use table name as a string
+            model: 'Stories',
             key: 'id'
         }
     },
@@ -19,7 +19,7 @@ const Comment = sequelize.define('Comment', {
         type: DataTypes.UUID,
         allowNull: false,
         references: {
-            model: 'Users', // Use table name as a string
+            model: 'Users',
             key: 'id'
         }
     },
@@ -31,13 +31,9 @@ const Comment = sequelize.define('Comment', {
         type: DataTypes.UUID,
         allowNull: true,
         references: {
-            model: 'Comments', // Use table name as a string
+            model: 'Comments',
             key: 'id'
         }
-    },
-    isEdited: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false
     }
 }, {
     timestamps: true,
@@ -48,16 +44,17 @@ const Comment = sequelize.define('Comment', {
     ]
 });
 
-// Lazily load models to define associations
-import('./Story.js').then(({ default: Story }) => {
-    Comment.belongsTo(Story, { as: 'story', foreignKey: 'storyId' });
-});
+// Lazily load models to avoid circular dependencies
 import('./User.js').then(({ default: User }) => {
-    Comment.belongsTo(User, { as: 'user', foreignKey: 'userId' });
+    Comment.belongsTo(User, { foreignKey: 'userId' });
 });
-import('./Comment.js').then(({ default: ParentComment }) => {
-    Comment.belongsTo(ParentComment, { as: 'parent', foreignKey: 'parentId' });
-    Comment.hasMany(ParentComment, { as: 'replies', foreignKey: 'parentId' });
+
+import('./Story.js').then(({ default: Story }) => {
+    Comment.belongsTo(Story, { foreignKey: 'storyId' });
 });
+
+// Self-referencing relationship for nested comments
+Comment.belongsTo(Comment, { as: 'parent', foreignKey: 'parentId' });
+Comment.hasMany(Comment, { as: 'replies', foreignKey: 'parentId' });
 
 export default Comment;

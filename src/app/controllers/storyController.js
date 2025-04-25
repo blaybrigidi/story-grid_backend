@@ -1,5 +1,5 @@
 /** @format */
-import { createStory as createStoryService, getStory as getStoryService, deleteStory as deleteStoryService } from '../services/storyService.js';
+import { createStory as createStoryService, getStory as getStoryService, deleteStory as deleteStoryService, likeStory as likeStoryService, unlikeStory as unlikeStoryService, addComment as addCommentService, getComments as getCommentsService, deleteComment as deleteCommentService } from '../services/storyService.js';
 import Media from '../models/Media.js';
 
 /**
@@ -159,6 +159,192 @@ export const deleteStory = async (req) => {
         };
     } catch (error) {
         console.error("Delete story error:", error);
+        return {
+            status: 500,
+            msg: "Internal Server Error",
+            data: null
+        };
+    }
+};
+
+/**
+ * Controller for liking a story
+ * @param {Object} req - Express request object
+ * @returns {Object} - Response object with status, message, and data
+ */
+export const likeStory = async (req) => {
+    try {
+        const { storyId } = req.body.data || req.body;
+        const userId = req.user.id;
+
+        if (!storyId) {
+            return {
+                status: 400,
+                msg: "Story ID is required",
+                data: null
+            };
+        }
+
+        const result = await likeStoryService(storyId, userId);
+
+        return {
+            status: result.status || 200,
+            msg: result.msg || "Story liked successfully",
+            data: result.data
+        };
+    } catch (error) {
+        console.error("Like story error:", error);
+        return {
+            status: 500,
+            msg: "Internal Server Error",
+            data: null
+        };
+    }
+};
+
+/**
+ * Controller for unliking a story
+ * @param {Object} req - Express request object
+ * @returns {Object} - Response object with status, message, and data
+ */
+export const unlikeStory = async (req) => {
+    try {
+        const { storyId } = req.body.data || req.body;
+        const userId = req.user.id;
+
+        if (!storyId) {
+            return {
+                status: 400,
+                msg: "Story ID is required",
+                data: null
+            };
+        }
+
+        const result = await unlikeStoryService(storyId, userId);
+
+        return {
+            status: result.status || 200,
+            msg: result.msg || "Story unliked successfully",
+            data: result.data
+        };
+    } catch (error) {
+        console.error("Unlike story error:", error);
+        return {
+            status: 500,
+            msg: "Internal Server Error",
+            data: null
+        };
+    }
+};
+
+/**
+ * Controller for adding a comment to a story
+ * @param {Object} req - Express request object
+ * @returns {Object} - Response object with status, message, and data
+ */
+export const commentStory = async (req) => {
+    try {
+        const { storyId, content, parentId } = req.body.data || req.body;
+        const userId = req.user.id;
+
+        if (!storyId) {
+            return {
+                status: 400,
+                msg: "Story ID is required",
+                data: null
+            };
+        }
+
+        if (!content || content.trim() === '') {
+            return {
+                status: 400,
+                msg: "Comment content cannot be empty",
+                data: null
+            };
+        }
+
+        const result = await addCommentService(storyId, userId, content, parentId);
+
+        return {
+            status: result.status || 201,
+            msg: result.msg || "Comment added successfully",
+            data: result.data
+        };
+    } catch (error) {
+        console.error("Comment story error:", error);
+        return {
+            status: 500,
+            msg: "Internal Server Error",
+            data: null
+        };
+    }
+};
+
+/**
+ * Controller for retrieving comments on a story
+ * @param {Object} req - Express request object
+ * @returns {Object} - Response object with status, message, and data
+ */
+export const getComments = async (req) => {
+    try {
+        const { storyId, page, limit } = req.body.data || req.body;
+
+        if (!storyId) {
+            return {
+                status: 400,
+                msg: "Story ID is required",
+                data: null
+            };
+        }
+
+        const result = await getCommentsService(
+            storyId,
+            parseInt(page) || 1,
+            parseInt(limit) || 10
+        );
+
+        return {
+            status: result.status || 200,
+            msg: result.msg || "Comments retrieved successfully",
+            data: result.data
+        };
+    } catch (error) {
+        console.error("Get comments error:", error);
+        return {
+            status: 500,
+            msg: "Internal Server Error",
+            data: null
+        };
+    }
+};
+
+/**
+ * Controller for deleting a comment
+ * @param {Object} req - Express request object
+ * @returns {Object} - Response object with status, message, and data
+ */
+export const deleteComment = async (req) => {
+    try {
+        const { commentId } = req.body.data || req.body;
+        const userId = req.user.id;
+
+        if (!commentId) {
+            return {
+                status: 400,
+                msg: "Comment ID is required",
+                data: null
+            };
+        }
+
+        const result = await deleteCommentService(commentId, userId);
+
+        return {
+            status: result.status || 200,
+            msg: result.msg || "Comment deleted successfully",
+            data: result.data
+        };
+    } catch (error) {
+        console.error("Delete comment error:", error);
         return {
             status: 500,
             msg: "Internal Server Error",
