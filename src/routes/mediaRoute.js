@@ -1,4 +1,4 @@
-/** @format */
+ /** @format */
 import * as mediaController from "../app/controllers/mediaController.js";
 import responseHandler from "../app/helper/encryptingRes.js";
 
@@ -14,6 +14,28 @@ export default function (router, auth) {
       auth.verifyToken, 
       auth.isUserVerified, 
       responseHandler(mediaController.uploadMedia)
+   );
+   
+   /**
+    * @route POST /api/media/getUploadParams
+    * @description Get Cloudinary direct upload parameters for frontend direct uploads
+    * @access Private - Requires authentication
+    */
+   router.post("/media/getUploadParams", 
+      auth.verifyToken, 
+      auth.isUserVerified, 
+      responseHandler(mediaController.getUploadParams)
+   );
+   
+   /**
+    * @route POST /api/media/saveUploadedMedia
+    * @description Save information about media directly uploaded to Cloudinary
+    * @access Private - Requires authentication
+    */
+   router.post("/media/saveUploadedMedia", 
+      auth.verifyToken, 
+      auth.isUserVerified, 
+      responseHandler(mediaController.saveUploadedMedia)
    );
    
    /**

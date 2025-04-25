@@ -26,6 +26,141 @@ The typical flow for story interaction is as follows:
    - Reply to comments by including a `parentId` in the commentStory request
    - Delete comments with `/api/story/deleteComment`
 
+## Feed Endpoints
+
+### Get Friends Feed
+
+Retrieves stories from the user's friends and the user's own stories for the main feed.
+
+```
+POST /api/feed/getFeed
+```
+
+**Request Body:**
+
+```json
+{
+  "data": {
+    "page": 1,
+    "limit": 10,
+    "sortBy": "createdAt",
+    "sortOrder": "DESC"
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "status": 200,
+  "msg": "Feed retrieved successfully",
+  "data": {
+    "stories": [
+      {
+        "id": "123e4567-e89b-12d3-a456-426614174000",
+        "title": "My Vacation Story",
+        "content": "This is the content of my story",
+        "userId": "user-id",
+        "status": "published",
+        "category": "travel",
+        "tags": ["vacation", "summer"],
+        "createdAt": "2023-06-15T14:30:00.000Z",
+        "updatedAt": "2023-06-15T14:30:00.000Z",
+        "author": {
+          "id": "user-id",
+          "username": "johndoe",
+          "email": "john@example.com"
+        },
+        "media": [
+          {
+            "id": "media-id",
+            "type": "image",
+            "url": "https://cloudinary.url/image.jpg",
+            "order": 0
+          }
+        ],
+        "likes": [{ "userId": "liker-id-1" }, { "userId": "liker-id-2" }],
+        "likeCount": 2,
+        "commentCount": 5,
+        "userLiked": true,
+        "timeAgo": "2 days ago"
+      }
+    ],
+    "pagination": {
+      "total": 42,
+      "page": 1,
+      "pages": 5
+    }
+  }
+}
+```
+
+### Get Discover Feed
+
+Retrieves trending stories from all users for the discover feed.
+
+```
+POST /api/feed/getDiscover
+```
+
+**Request Body:**
+
+```json
+{
+  "data": {
+    "page": 1,
+    "limit": 10
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "status": 200,
+  "msg": "Discover feed retrieved successfully",
+  "data": {
+    "stories": [
+      {
+        "id": "123e4567-e89b-12d3-a456-426614174000",
+        "title": "Trending Story Title",
+        "content": "This is the content of the trending story",
+        "userId": "user-id",
+        "status": "published",
+        "category": "technology",
+        "tags": ["trending", "tech"],
+        "createdAt": "2023-06-15T14:30:00.000Z",
+        "updatedAt": "2023-06-15T14:30:00.000Z",
+        "author": {
+          "id": "user-id",
+          "username": "techwriter",
+          "email": "tech@example.com"
+        },
+        "media": [
+          {
+            "id": "media-id",
+            "type": "image",
+            "url": "https://cloudinary.url/image.jpg",
+            "order": 0
+          }
+        ],
+        "likeCount": 120,
+        "commentCount": 45,
+        "userLiked": false,
+        "timeAgo": "1 day ago"
+      }
+    ],
+    "pagination": {
+      "total": 100,
+      "page": 1,
+      "pages": 10
+    }
+  }
+}
+```
+
 ## Media Endpoints
 
 ### Upload Media
@@ -57,6 +192,152 @@ POST /api/media/upload
 ```
 
 To decrypt the data, use the utility endpoint.
+
+### Get Direct Upload Parameters
+
+```
+POST /api/media/getUploadParams
+```
+
+This endpoint provides Cloudinary upload parameters for direct frontend uploads from local devices.
+
+**Request Body:**
+
+```json
+{
+  "data": {
+    "fileName": "example.jpg", // Optional
+    "fileType": "image/jpeg" // Optional
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "status": 200,
+  "msg": "Upload parameters generated successfully",
+  "data": {
+    "cloudName": "your-cloud-name",
+    "apiKey": "your-api-key",
+    "uploadParams": {
+      "timestamp": 1234567890,
+      "folder": "storygrid/2023/7",
+      "public_id": "storygrid/2023/7/1234567890_example",
+      "api_key": "your-api-key",
+      "signature": "calculated-signature-for-signed-uploads"
+    },
+    "uploadPreset": "my_unsigned_preset",
+    "folder": "storygrid/2023/7",
+    "uploadUrl": "https://api.cloudinary.com/v1_1/your-cloud-name/auto/upload"
+  }
+}
+```
+
+Use these parameters with the following frontend code to upload directly from the user's device:
+
+```javascript
+document.getElementById("upload-button").addEventListener("click", () => {
+    const fileInput = document.getElementById("file-upload");
+    const statusText = document.getElementById("upload-status");
+
+    const file = fileInput.files[0];
+    if (!file) {
+        statusText.textContent = "Please select a file to upload.";
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "my_unsigned_preset"); // your preset name
+
+    statusText.textContent = "Uploading...";
+
+    fetch("https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/auto/upload", {
+        method: "POST",
+        body: formData
+    })
+    .then((res) => res.json())
+    .then((data) => {
+        statusText.innerHTML = `Upload successful! <br> <a href="${data.secure_url}" target="_blank">View file</a>`;
+        console.log("Uploaded URL:", data.secure_url);
+
+        // After uploading, save the media info to StoryGrid
+        saveMediaToStoryGrid(data);
+    })
+    .catch((err) => {
+        console.error("Upload failed:", err);
+        statusText.textContent = "Upload failed. See console for details.";
+    });
+});
+
+// Function to save the uploaded media to StoryGrid
+function saveMediaToStoryGrid(cloudinaryData) {
+    fetch('/api/media/saveUploadedMedia', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer YOUR_TOKEN'
+        },
+        body: JSON.stringify({
+            data: {
+                url: cloudinaryData.secure_url,
+                type: cloudinaryData.resource_type === 'image' ? 'image' : 'video',
+                metadata: {
+                    publicId: cloudinaryData.public_id,
+                    format: cloudinaryData.format,
+                    size: cloudinaryData.bytes
+                }
+            }
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        console.log('Media saved to StoryGrid:', data);
+    });
+}
+
+### Save Uploaded Media
+
+```
+
+POST /api/media/saveUploadedMedia
+
+````
+
+After a direct upload to Cloudinary, use this endpoint to save the media information in the StoryGrid database.
+
+**Request Body:**
+
+```json
+{
+  "data": {
+    "url": "https://res.cloudinary.com/your-cloud-name/image/upload/v1234567890/example.jpg",
+    "type": "image",
+    "storyId": "optional-story-id",
+    "metadata": {
+      "publicId": "storygrid/2023/7/1234567890_example",
+      "format": "jpg",
+      "size": 123456
+    }
+  }
+}
+````
+
+**Response:**
+
+```json
+{
+  "status": 201,
+  "msg": "Media record saved successfully",
+  "data": {
+    "mediaId": "123e4567-e89b-12d3-a456-426614174000",
+    "url": "https://res.cloudinary.com/your-cloud-name/image/upload/v1234567890/example.jpg",
+    "type": "image"
+  }
+}
+```
 
 ### Delete Media
 
