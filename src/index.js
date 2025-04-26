@@ -34,7 +34,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // CORS setup
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || '*', // Allow requests from your frontend domain
+  origin: process.env.FRONTEND_URL || 'http://localhost:3001', // Allow requests from your frontend domain
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
@@ -152,7 +152,7 @@ app.use('/api/auth', authRoutes);
 testConnection();
 
 // Start server
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, "0.0.0.0", (err) => {
     if (!err) {
         console.log(`[INFO] Server running on port ${PORT}`);
