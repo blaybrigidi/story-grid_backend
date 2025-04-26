@@ -585,3 +585,117 @@ export const deleteComment = async (commentId, userId) => {
         };
     }
 };
+
+/**
+ * Get a user's recent stories and drafts for the dashboard
+ * @param {string} userId - ID of the user requesting their dashboard stories
+ * @param {number} limit - Number of stories to retrieve per category (published/draft)
+ * @returns {Object} - Response with status, message, and data containing recent stories and drafts
+ */
+export const getUserDashboardStories = async (userId, limit = 3) => {
+    try {
+        // Get recent published stories
+        const recentPublished = await Story.findAll({
+            where: { 
+                userId,
+                status: 'published'
+            },
+            include: [
+                {
+                    model: Media,
+                    as: 'media',
+                    attributes: ['id', 'type', 'url', 'order']
+                },
+                {
+                    model: Like,
+                    as: 'likes',
+                    attributes: ['userId']
+                },
+                {
+                    model: Comment,
+                    as: 'comments',
+                    attributes: ['id'],
+                    limit: 0,
+                    separate: true
+                }
+            ],
+            order: [['createdAt', 'DESC']],
+            limit
+        });
+        
+        // Get recent drafts
+        const recentDrafts = await Story.findAll({
+            where: { 
+                userId,
+                status: 'draft'
+            },
+            include: [
+                {
+                    model: Media,
+                    as: 'media',
+                    attributes: ['id', 'type', 'url', 'order']
+                }
+            ],
+            order: [['updatedAt', 'DESC']],
+            limit
+        });
+        
+        // Process stories to add metadata
+        const processStories = (stories) => {
+            return stories.map(story => {
+                const storyObj = story.toJSON();
+                
+                // Add metrics if available
+                if (story.likes) {
+                    storyObj.likeCount = story.likes.length;
+                }
+                
+                if (story.comments) {
+                    storyObj.commentCount = story.comments.length;
+                }
+                
+                // Calculate time ago for display
+                const lastModified = story.status === 'draft' ? story.updatedAt : story.createdAt;
+                const now = new Date();
+                const diffTime = Math.abs(now - lastModified);
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays < 1) {
+                    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+                    if (diffHours < 1) {
+                        const diffMinutes = Math.floor(diffTime / (1000 * 60));
+                        storyObj.timeAgo = `${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''} ago`;
+                    } else {
+                        storyObj.timeAgo = `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+                    }
+                } else if (diffDays < 7) {
+                    storyObj.timeAgo = `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+                } else {
+                    storyObj.timeAgo = lastModified.toLocaleDateString();
+                }
+                
+                return storyObj;
+            });
+        };
+        
+        return {
+            status: 200,
+            msg: 'Dashboard stories retrieved successfully',
+            data: {
+                recentPublished: processStories(recentPublished),
+                recentDrafts: processStories(recentDrafts)
+            }
+        };
+    } catch (error) {
+        console.error('Get dashboard stories error:', error);
+        return {
+            status: 500,
+            msg: 'Failed to retrieve dashboard stories',
+            data: null,
+            error: {
+                code: error.code || 'DASHBOARD_STORIES_ERROR',
+                details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            }
+        };
+    }
+};

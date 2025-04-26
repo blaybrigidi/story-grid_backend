@@ -1,5 +1,5 @@
 /** @format */
-import { createStory as createStoryService, getStory as getStoryService, deleteStory as deleteStoryService, likeStory as likeStoryService, unlikeStory as unlikeStoryService, addComment as addCommentService, getComments as getCommentsService, deleteComment as deleteCommentService } from '../services/storyService.js';
+import { createStory as createStoryService, getStory as getStoryService, deleteStory as deleteStoryService, likeStory as likeStoryService, unlikeStory as unlikeStoryService, addComment as addCommentService, getComments as getCommentsService, deleteComment as deleteCommentService, getUserDashboardStories as getUserDashboardStoriesService } from '../services/storyService.js';
 import Media from '../models/Media.js';
 
 /**
@@ -349,6 +349,40 @@ export const deleteComment = async (req) => {
             status: 500,
             msg: "Internal Server Error",
             data: null
+        };
+    }
+};
+
+/**
+ * Controller for getting user's dashboard stories (recent published and drafts)
+ * @param {Object} req - Express request object
+ * @returns {Object} - Response object with status, message, and data
+ */
+export const getDashboardStories = async (req) => {
+    try {
+        const { limit } = req.body.data || req.body || {};
+        const userId = req.user.id;
+
+        const result = await getUserDashboardStoriesService(
+            userId,
+            parseInt(limit) || 3
+        );
+
+        return {
+            status: result.status || 200,
+            msg: result.msg || "Dashboard stories retrieved successfully",
+            data: result.data
+        };
+    } catch (error) {
+        console.error("Get dashboard stories error:", error);
+        return {
+            status: 500,
+            msg: "Internal Server Error",
+            data: null,
+            error: {
+                code: error.code || 'DASHBOARD_STORIES_ERROR',
+                details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            }
         };
     }
 };

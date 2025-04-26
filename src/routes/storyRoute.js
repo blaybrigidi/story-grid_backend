@@ -54,6 +54,12 @@ export default function (router, auth) {
       auth.isUserVerified, 
       responseHandler(storyController.deleteComment)
    );
+   
+   router.post("/story/getDashboardStories", 
+      auth.verifyToken, 
+      auth.isUserVerified, 
+      responseHandler(storyController.getDashboardStories)
+   );
 
    /*-------------------- Media APIs ---------------------------------------------------*/
    router.post("/media/upload", 
