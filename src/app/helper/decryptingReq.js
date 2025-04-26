@@ -1,11 +1,10 @@
+import * as secure from './secure.js';
+
 /**
  * Middleware to decrypt request data if needed
  * @param {Express.Application} app - Express application instance
  */
 export default function decryptReq(app) {
-  // This is a placeholder for actual decryption logic
-  // In a real application, you would implement your decryption logic here
-  
   app.use((req, res, next) => {
     // Skip decryption for certain routes
     const skipDecryptionRoutes = [
@@ -18,30 +17,24 @@ export default function decryptReq(app) {
       return next();
     }
     
-    // Check if request needs decryption
-    const needsDecryption = req.headers['x-encrypted'] === 'true';
-    
-    if (needsDecryption && req.body) {
-      try {
-        // In a real application, you would decrypt the request body here
-        // For now, we'll just log that decryption would happen
-        console.log('[INFO] Request would be decrypted in production');
-        
-        // Example decryption logic (commented out):
-        // const decryptedData = decrypt(req.body.data);
-        // req.body = JSON.parse(decryptedData);
-      } catch (error) {
-        console.error('[ERROR] Request decryption failed:', error.message);
-        return res.status(400).json({
-          status: 400,
-          msg: 'Failed to decrypt request data',
-          data: null
-        });
+    try {
+      if (req.body && req.body.data) {
+        // If the data is already an object, don't try to decrypt
+        if (typeof req.body.data === 'string') {
+          const decryptedData = secure.decrypt(req.body.data);
+          req.body.data = decryptedData;
+        }
       }
+      next();
+    } catch (error) {
+      console.error('[ERROR] Request decryption failed:', error);
+      return res.status(400).json({
+        status: 400,
+        msg: 'Failed to decrypt request data',
+        data: null
+      });
     }
-    
-    next();
   });
   
   console.log('[INFO] Request decryption middleware configured');
-} 
+}

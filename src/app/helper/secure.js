@@ -2,21 +2,28 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'your-fallback-encryption-key-32-chars-long'; // 32 bytes
-const IV_LENGTH = 16; // For AES, this is always 16
+const ENCRYPTION_KEY = crypto.scryptSync(process.env.JWT_SECRET || 'your-fallback-secret', 'salt', 32);
+const ALGORITHM = 'aes-256-cbc';
+const IV_LENGTH = 16;
 
 /**
  * Encrypts data using AES-256-CBC
  * @param {string} text - Data to encrypt
  * @returns {string} - Encrypted data
  */
-export const encrypt = (text) => {
+export const encrypt = (data) => {
     try {
+        if (!data) return null;
+        
         const iv = crypto.randomBytes(IV_LENGTH);
-        const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
-        let encrypted = cipher.update(text);
-        encrypted = Buffer.concat([encrypted, cipher.final()]);
-        return iv.toString('hex') + ':' + encrypted.toString('hex');
+        const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
+        
+        const encrypted = Buffer.concat([
+            cipher.update(typeof data === 'string' ? data : JSON.stringify(data)),
+            cipher.final()
+        ]);
+        
+        return `${iv.toString('hex')}:${encrypted.toString('hex')}`;
     } catch (error) {
         console.error('Encryption error:', error);
         throw new Error('Failed to encrypt data');
@@ -30,13 +37,24 @@ export const encrypt = (text) => {
  */
 export const decrypt = (text) => {
     try {
-        const textParts = text.split(':');
-        const iv = Buffer.from(textParts.shift(), 'hex');
-        const encryptedText = Buffer.from(textParts.join(':'), 'hex');
-        const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
-        let decrypted = decipher.update(encryptedText);
-        decrypted = Buffer.concat([decrypted, decipher.final()]);
-        return decrypted.toString();
+        if (!text) return null;
+        
+        const [ivHex, encryptedHex] = text.split(':');
+        const iv = Buffer.from(ivHex, 'hex');
+        const encrypted = Buffer.from(encryptedHex, 'hex');
+        
+        const decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
+        const decrypted = Buffer.concat([
+            decipher.update(encrypted),
+            decipher.final()
+        ]);
+        
+        const result = decrypted.toString();
+        try {
+            return JSON.parse(result);
+        } catch {
+            return result;
+        }
     } catch (error) {
         console.error('Decryption error:', error);
         throw new Error('Failed to decrypt data');
@@ -101,30 +119,8 @@ export const hashPassword = async (password) => {
  * @param {string} hash - Hash to verify against
  * @returns {Promise<boolean>} - Whether the password matches
  */
-export const verifyPassword = async (password, hash) => {
-    console.log('Verifying password with bcrypt:');
-    console.log('Password to verify:', password);
-    console.log('Stored hash:', hash);
-    
-    // Try bcrypt verification
-    const bcryptResult = await bcrypt.compare(password, hash);
-    console.log('Bcrypt verification result:', bcryptResult);
-    
-    // Also try PBKDF2 for comparison
-    try {
-        const [pbkdf2Hash, salt] = hash.split(':');
-        if (pbkdf2Hash && salt) {
-            console.log('Attempting PBKDF2 verification:');
-            console.log('PBKDF2 hash part:', pbkdf2Hash);
-            console.log('PBKDF2 salt part:', salt);
-            const verifyHash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
-            console.log('PBKDF2 computed hash:', verifyHash);
-            const pbkdf2Result = pbkdf2Hash === verifyHash;
-            console.log('PBKDF2 verification result:', pbkdf2Result);
-        }
-    } catch (error) {
-        console.log('PBKDF2 verification error:', error.message);
-    }
-    
-    return bcryptResult;
-}; 
+export const verifyPassword = (password, hash) => {
+    const [hashedPassword, salt] = hash.split(':');
+    const verifyHash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+    return hashedPassword === verifyHash;
+};

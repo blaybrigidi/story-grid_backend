@@ -1,8 +1,13 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import User from '../models/User.js';
 import { sendOTP } from '../utils/email.js';
-import { generateToken, verifyPassword, hashPassword } from '../helper/secure.js';
+
+// Generate a secure JWT secret if not provided
+const getJwtSecret = () => {
+    return process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
+};
 
 export const register = async (userData) => {
     try {
@@ -43,10 +48,12 @@ export const register = async (userData) => {
         });
         console.log('User created successfully with ID:', user.id);
 
-        // Generate JWT token
-        console.log('Generating token for user:', user.id);
-        const token = generateToken(user);
-        console.log('Token generated successfully');
+        // Generate JWT token with proper secret
+        const token = jwt.sign(
+            { id: user.id },
+            getJwtSecret(),
+            { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+        );
 
         return {
             status: 201,
@@ -150,8 +157,8 @@ export const verifyLogin = async (email, otp) => {
         // Generate JWT token
         const token = jwt.sign(
             { id: user.id, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN }
+            getJwtSecret(),
+            { expiresIn: process.env.JWT_EXPIRES_IN || '24h' } // Provide a default value
         );
 
         return {
@@ -281,11 +288,17 @@ export const changePassword = async (userId, currentPassword, newPassword) => {
 
 export const login = async (email, password) => {
     try {
-        console.log('Login attempt for email:', email);
-        console.log('Password provided:', password);
+        console.log('Login attempt details:', {
+            email,
+            passwordLength: password?.length
+        });
         
-        // Find user by email
         const user = await User.findOne({ where: { email } });
+        console.log('User details:', {
+            found: !!user,
+            hashedPasswordLength: user?.password?.length,
+        });
+        
         if (!user) {
             console.log('User not found with email:', email);
             return {
@@ -294,14 +307,24 @@ export const login = async (email, password) => {
                 data: null
             };
         }
-        
-        console.log('User found:', user.id);
-        console.log('Username:', user.username);
-        console.log('Stored password hash:', user.password);
-        console.log('Password hash length:', user.password.length);
-        console.log('Password hash format:', user.password.startsWith('$2a$') ? 'bcrypt' : 'unknown');
-        
-        // Check if account is blocked
+
+        // Check password
+        const isValidPassword = await bcrypt.compare(password, user.password);
+        console.log('Password comparison:', {
+            inputPasswordLength: password?.length,
+            storedHashLength: user.password?.length,
+            isValid: isValidPassword
+        });
+
+        if (!isValidPassword) {
+            return {
+                status: 400,
+                msg: 'Invalid credentials',
+                data: null
+            };
+        }
+
+        // Check if user is blocked
         if (user.isBlocked) {
             console.log('User account is blocked:', user.id);
             return {
@@ -310,24 +333,15 @@ export const login = async (email, password) => {
                 data: null
             };
         }
-        
-        // Verify password using bcrypt directly
-        console.log('Verifying password for user:', user.id);
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        console.log('Password verification result:', isPasswordValid);
-        
-        if (!isPasswordValid) {
-            console.log('Invalid password for user:', user.id);
-            return {
-                status: 401,
-                msg: "Invalid credentials",
-                data: null
-            };
-        }
-        
-        // Generate JWT token
-        const token = generateToken(user);
-        
+
+        // Generate JWT token using same secret as registration
+        const token = jwt.sign(
+            { id: user.id },
+            getJwtSecret(),
+            { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
+        );
+
+        // Return same user data structure as registration
         return {
             status: 200,
             msg: "Login successful",

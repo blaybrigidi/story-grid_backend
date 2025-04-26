@@ -9,7 +9,7 @@ const User = sequelize.define('User', {
     primaryKey: true
   },
   username: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(30),
     allowNull: false,
     unique: true,
     validate: {
@@ -27,6 +27,19 @@ const User = sequelize.define('User', {
   password: {
     type: DataTypes.STRING,
     allowNull: false
+    // Remove the set function to prevent double hashing
+  },
+  firstName: {
+    type: DataTypes.STRING(50),
+    allowNull: true
+  },
+  lastName: {
+    type: DataTypes.STRING(50),
+    allowNull: true
+  },
+  phoneNumber: {
+    type: DataTypes.STRING(15),
+    allowNull: true
   },
   isEmailVerified: {
     type: DataTypes.BOOLEAN,
@@ -41,18 +54,9 @@ const User = sequelize.define('User', {
     defaultValue: 'user'
   }
 }, {
-  hooks: {
-    beforeCreate: async (user) => {
-      if (user.password) {
-        user.password = await bcrypt.hash(user.password, 10);
-      }
-    },
-    beforeUpdate: async (user) => {
-      if (user.changed('password')) {
-        user.password = await bcrypt.hash(user.password, 10);
-      }
-    }
-  }
+  timestamps: true,
+  // Remove the hooks since we're handling password hashing in the setter
+  hooks: {}
 });
 
-export default User; 
+export default User;
