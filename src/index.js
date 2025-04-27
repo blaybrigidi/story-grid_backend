@@ -152,7 +152,7 @@ app.use('/api/auth', authRoutes);
 testConnection();
 
 // Start server
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3001;
 const server = app.listen(PORT, "0.0.0.0", (err) => {
     if (!err) {
         console.log(`[INFO] Server running on port ${PORT}`);
