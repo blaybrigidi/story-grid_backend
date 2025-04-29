@@ -8,5 +8,9 @@ export default function (router, aut) {
 
    /*-------------------- Onboarding APIs ---------------------------------------------------*/
    router.post("/user/signUp", userValidate.signUp, responseHandler(userController.signup));
-   router.post("/user/login", userValidate.valUserLogin, responseHandler(userController.login));
+   router.post("/user/login", userValidate.valUserLogin, async (req, res) => {
+      const result = await userController.login(req);
+      console.log("Login endpoint response:", JSON.stringify(result, null, 2)); // <-- Add this line
+      res.status(result.status).json(result);
+  });
 }
