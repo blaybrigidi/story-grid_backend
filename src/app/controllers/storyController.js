@@ -1,5 +1,5 @@
 /** @format */
-import { createStory as createStoryService, getStory as getStoryService, deleteStory as deleteStoryService, likeStory as likeStoryService, unlikeStory as unlikeStoryService, addComment as addCommentService, getComments as getCommentsService, deleteComment as deleteCommentService, getUserDashboardStories as getUserDashboardStoriesService, getRecentStories as getRecentStoriesService, updateStory as updateStoryService } from '../services/storyService.js';
+import { createStory as createStoryService, getStory as getStoryService, deleteStory as deleteStoryService, likeStory as likeStoryService, unlikeStory as unlikeStoryService, addComment as addCommentService, getComments as getCommentsService, deleteComment as deleteCommentService, getUserDashboardStories as getUserDashboardStoriesService, getRecentStories as getRecentStoriesService } from '../services/storyService.js';
 import Media from '../models/Media.js';
 
 /**
