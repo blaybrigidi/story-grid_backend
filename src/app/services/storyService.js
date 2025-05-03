@@ -8,10 +8,11 @@ import Like from '../models/Like.js';
 
 export const createStory = async (storyData, userId) => {
     try {
+        // Use default status 'draft' if none is provided
         const story = await Story.create({
             ...storyData,
             userId,
-            status: 'draft'
+            status: storyData.status || 'draft'
         });
 
         return {
@@ -88,7 +89,7 @@ export const getStory = async (storyId, userId) => {
     }
 };
 
-export const updateStoryService = async (storyId, userId, updateData) => {
+export const updateStory = async (storyId, userId, updateData) => {
     try {
         const story = await Story.findOne({
             where: { id: storyId, userId }
