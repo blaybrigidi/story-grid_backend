@@ -88,7 +88,7 @@ export const getStory = async (storyId, userId) => {
     }
 };
 
-export const updateStory = async (storyId, userId, updateData) => {
+export const updateStoryService = async (storyId, userId, updateData) => {
     try {
         const story = await Story.findOne({
             where: { id: storyId, userId }

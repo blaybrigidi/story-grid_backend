@@ -732,3 +732,32 @@ POST /api/story/getDashboardStories
 ```
 POST /api/util/decrypt
 ```
+
+### Publish Story
+
+```
+POST /api/story/publishStory
+```
+
+**Request Body:**
+
+```json
+{
+  "data": {
+    "storyId": "123e4567-e89b-12d3-a456-426614174000"
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "status": 200,
+  "msg": "Story published successfully",
+  "data": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "status": "published"
+  }
+}
+```

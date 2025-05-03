@@ -1,5 +1,5 @@
 /** @format */
-import { createStory as createStoryService, getStory as getStoryService, deleteStory as deleteStoryService, likeStory as likeStoryService, unlikeStory as unlikeStoryService, addComment as addCommentService, getComments as getCommentsService, deleteComment as deleteCommentService, getUserDashboardStories as getUserDashboardStoriesService, getRecentStories as getRecentStoriesService } from '../services/storyService.js';
+import { createStory as createStoryService, getStory as getStoryService, deleteStory as deleteStoryService, likeStory as likeStoryService, unlikeStory as unlikeStoryService, addComment as addCommentService, getComments as getCommentsService, deleteComment as deleteCommentService, getUserDashboardStories as getUserDashboardStoriesService, getRecentStories as getRecentStoriesService, updateStory as updateStoryService } from '../services/storyService.js';
 import Media from '../models/Media.js';
 
 /**
@@ -413,3 +413,46 @@ export const getRecentStories = async (req) => {
     }
 };
 
+/**
+ * Controller for publishing a story
+ * @param {Object} req - Express request object
+ * @returns {Object} - Response object with status, message, and data
+ */
+export const publishStory = async (req) => {
+    try {
+        const { storyId } = req.body.data || req.body;
+        const userId = req.user.id;
+
+        if (!storyId) {
+            return {
+                status: 400,
+                msg: "Story ID is required",
+                data: null
+            };
+        }
+
+        // Call service to update the story status to 'published'
+        const result = await updateStoryService(storyId, userId, { status: 'published' });
+
+        if (result.status === 404) {
+            return {
+                status: 404,
+                msg: "Story not found or unauthorized",
+                data: null
+            };
+        }
+
+        return {
+            status: result.status || 200,
+            msg: result.msg || "Story published successfully",
+            data: result.data
+        };
+    } catch (error) {
+        console.error("Publish story error:", error);
+        return {
+            status: 500,
+            msg: "Internal Server Error",
+            data: null
+        };
+    }
+};
