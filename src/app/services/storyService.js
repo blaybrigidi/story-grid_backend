@@ -699,3 +699,84 @@ export const getUserDashboardStories = async (userId, limit = 3) => {
         };
     }
 };
+
+export const getRecentStories = async (filters = {}, page = 1, limit = 10) => {
+    try {
+        const offset = (page - 1) * limit;
+        const where = {
+            status: 'published'
+        };
+
+        // Apply filters
+        if (filters.category) where.category = filters.category;
+        if (filters.userId) where.userId = filters.userId;
+        if (filters.search) {
+            where[Op.or] = [
+                { title: { [Op.like]: `%${filters.search}%` } },
+                { content: { [Op.like]: `%${filters.search}%` } }
+            ];
+        }
+
+        const { count, rows } = await Story.findAndCountAll({
+            where,
+            include: [
+                {
+                    model: User,
+                    as: 'author',
+                    attributes: ['id', 'username', 'email']
+                },
+                {
+                    model: Media,
+                    as: 'media',
+                    attributes: ['id', 'type', 'url', 'order']
+                },
+                {
+                    model: Like,
+                    as: 'likes',
+                    attributes: ['userId']
+                },
+                {
+                    model: Comment,
+                    as: 'comments',
+                    attributes: ['id'],
+                    limit: 0,
+                    separate: true
+                }
+            ],
+            order: [['publishedAt', 'DESC']],
+            limit,
+            offset
+        });
+
+        // Add engagement metrics to each story
+        const storiesWithMetrics = rows.map(story => {
+            const engagementScore = 
+                (story.likes.length * 2) + // Likes count double
+                story.comments.length + // Comments count
+                story.viewCount; // Views count
+            
+            story.setDataValue('engagementScore', engagementScore);
+            return story;
+        });
+
+        return {
+            status: 200,
+            msg: 'Recent stories retrieved successfully',
+            data: {
+                stories: storiesWithMetrics,
+                pagination: {
+                    total: count,
+                    page,
+                    pages: Math.ceil(count / limit)
+                }
+            }
+        };
+    } catch (error) {
+        console.error('Get recent stories error:', error);
+        return {
+            status: 500,
+            msg: 'Failed to retrieve recent stories',
+            data: null
+        };
+    }
+};

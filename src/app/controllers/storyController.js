@@ -1,5 +1,5 @@
 /** @format */
-import { createStory as createStoryService, getStory as getStoryService, deleteStory as deleteStoryService, likeStory as likeStoryService, unlikeStory as unlikeStoryService, addComment as addCommentService, getComments as getCommentsService, deleteComment as deleteCommentService, getUserDashboardStories as getUserDashboardStoriesService } from '../services/storyService.js';
+import { createStory as createStoryService, getStory as getStoryService, deleteStory as deleteStoryService, likeStory as likeStoryService, unlikeStory as unlikeStoryService, addComment as addCommentService, getComments as getCommentsService, deleteComment as deleteCommentService, getUserDashboardStories as getUserDashboardStoriesService, getRecentStories as getRecentStoriesService } from '../services/storyService.js';
 import Media from '../models/Media.js';
 
 /**
@@ -383,6 +383,32 @@ export const getDashboardStories = async (req) => {
                 code: error.code || 'DASHBOARD_STORIES_ERROR',
                 details: process.env.NODE_ENV === 'development' ? error.stack : undefined
             }
+        };
+    }
+};
+
+/**
+ * Controller for getting recent stories
+ * @param {Object} req - Express request object
+ * @returns {Object} - Response object with status, message, and data
+ */
+export const getRecentStories = async (req) => {
+    try {
+        const { filters = {}, page = 1, limit = 10 } = req.body.data || req.body;
+
+        const result = await getRecentStoriesService(filters, page, limit);
+
+        return {
+            status: result.status || 200,
+            msg: result.msg || "Recent stories retrieved successfully",
+            data: result.data
+        };
+    } catch (error) {
+        console.error("Get recent stories error:", error);
+        return {
+            status: 500,
+            msg: "Internal Server Error",
+            data: null
         };
     }
 };
