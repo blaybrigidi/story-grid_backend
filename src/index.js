@@ -34,7 +34,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // CORS setup
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || '*', // Allow requests from your frontend domain
+  origin: process.env.FRONTEND_URL || 'http://localhost:3001', // Allow requests from your frontend domain
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
@@ -144,7 +144,8 @@ router.get("/ping", (req, res) => {
 
 // Routes
 app.use('/api/users', auth.verifyToken, userRoutes);
-app.use('/api/admin', auth.verifyAdminToken, adminRoutes);
+// Admin routes are already registered in initializeRoutes
+// app.use('/api/admin', auth.verifyAdminToken, adminRoutes);
 app.use('/api/friends', auth.verifyToken, friendRoutes);
 app.use('/api/auth', authRoutes);
 
@@ -152,7 +153,7 @@ app.use('/api/auth', authRoutes);
 testConnection();
 
 // Start server
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, "0.0.0.0", (err) => {
     if (!err) {
         console.log(`[INFO] Server running on port ${PORT}`);

@@ -10,30 +10,13 @@ export default (controllerFunction) => async (request, response, next) => {
         const result = await controllerFunction(request);
         console.log("Controller response:", result);
 
-        let encrypted_response = null;
-        if (result.data) {
-            try {
-                encrypted_response = secure.encrypt(result.data);
-            } catch (encryptionError) {
-                console.error("Encryption error:", encryptionError);
-                if (!response.headersSent) {
-                    return response.status(500).json({
-                        status: 500,
-                        msg: "Failed to encrypt response",
-                        data: null,
-                    });
-                }
-            }
-        } else {
-            console.log("No data to encrypt, received:", result.data);
-        }
-
+        // Return the data as a plain object, not encrypted
         if (!response.headersSent) {
             return response.status(+result.status).json({
                 status: result.status,
                 msg: result.msg,
                 meta: result.meta,
-                data: encrypted_response,
+                data: result.data,
             });
         }
     } catch (error) {

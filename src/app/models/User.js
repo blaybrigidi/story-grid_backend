@@ -8,6 +8,20 @@ const User = sequelize.define('User', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true
   },
+  firstName: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    validate: {
+      len: [0, 50]
+    }
+  },
+  lastName: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    validate: {
+      len: [0, 50]
+    }
+  },
   username: {
     type: DataTypes.STRING(30),
     allowNull: false,
@@ -52,6 +66,11 @@ const User = sequelize.define('User', {
   role: {
     type: DataTypes.ENUM('user', 'admin'),
     defaultValue: 'user'
+  },
+  bio: {
+    type: DataTypes.STRING, // or DataTypes.TEXT if you want longer bios
+    allowNull: true,
+    defaultValue: ""
   }
 }, {
   timestamps: true,

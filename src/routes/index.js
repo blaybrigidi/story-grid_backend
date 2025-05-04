@@ -6,6 +6,7 @@ import utilRoutes from './utilRoute.js';
 import storyRoutes from './storyRoute.js';
 import mediaRoutes from './mediaRoute.js';
 import feedRoutes from './feedRoute.js';
+import messagingRoutes from './messagingRoute.js';
 import auth from '../app/middleware/auth.js';
 
 /**
@@ -34,6 +35,9 @@ export default function initializeRoutes(app, router) {
   
   // Mount feed routes
   feedRoutes(router, auth);
+  
+  // Mount messaging routes
+  messagingRoutes(router, auth);
 
   // Mount utility routes (only in development)
   if (process.env.NODE_ENV === 'development') {

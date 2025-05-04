@@ -1,5 +1,5 @@
 /** @format */
-import { register, requestLogin as requestLoginService, verifyLogin as verifyLoginService, getProfile as getProfileService, updateProfile as updateProfileService, changePassword as changePasswordService, login as loginService } from '../services/userService.js';
+import { register, requestLogin as requestLoginService, verifyLogin as verifyLoginService, getProfile as getProfileService, updateProfile as updateProfileService, changePassword as changePasswordService, login as loginService, searchUsers as searchUsersService } from '../services/userService.js';
 
 /**
  * Controller for user signup
@@ -146,9 +146,18 @@ export const updateProfile = async (req) => {
   try {
     const userId = req.user.id;
     const updateData = req.body.data;
-    
+
+    // Optional: Validate bio length
+    if (updateData.bio && updateData.bio.length > 500) {
+      return {
+        status: 400,
+        msg: "Bio must be 500 characters or less",
+        data: null
+      };
+    }
+
     const result = await updateProfileService(userId, updateData);
-    
+
     return {
       status: result.status,
       msg: result.msg,
@@ -225,6 +234,43 @@ export const login = async (req) => {
     };
   } catch (error) {
     console.error("Login error:", error);
+    return {
+      status: 500,
+      msg: "Internal Server Error",
+      data: null
+    };
+  }
+};
+
+/**
+ * Controller for searching users
+ * @param {Object} req - Express request object
+ * @returns {Object} - Response object with status, message, and data
+ */
+export const searchUsers = async (req) => {
+  try {
+    const { query, limit } = req.body.data || req.body || {};
+    
+    console.log("Received search request:", { data: { query } });
+    
+    if (!query) {
+      return {
+        status: 400,
+        msg: "Search query is required",
+        data: null
+      };
+    }
+    
+    console.log(`Searching for users with query: "${query}"`);
+    const result = await searchUsersService(query, limit);
+    
+    return {
+      status: result.status || 200,
+      msg: result.msg || "Users found successfully",
+      data: result.data
+    };
+  } catch (error) {
+    console.error("Search users error:", error);
     return {
       status: 500,
       msg: "Internal Server Error",

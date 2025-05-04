@@ -648,12 +648,12 @@ POST /api/story/deleteComment
 }
 ```
 
-## Utility Endpoints
+### Get Dashboard Stories
 
-### Decrypt Response Data
+Retrieves a user's recent published stories and drafts for the dashboard view.
 
 ```
-POST /api/util/decrypt
+POST /api/story/getDashboardStories
 ```
 
 **Request Body:**
@@ -661,7 +661,7 @@ POST /api/util/decrypt
 ```json
 {
   "data": {
-    "encryptedData": "iv:encrypted-data-string"
+    "limit": 3 // Optional, defaults to 3
   }
 }
 ```
@@ -671,9 +671,93 @@ POST /api/util/decrypt
 ```json
 {
   "status": 200,
-  "msg": "Data decrypted successfully",
+  "msg": "Dashboard stories retrieved successfully",
   "data": {
-    // Decrypted data object
+    "recentPublished": [
+      {
+        "id": "123e4567-e89b-12d3-a456-426614174000",
+        "title": "My Latest Story",
+        "content": "This is the content of the story",
+        "userId": "user-id",
+        "status": "published",
+        "category": "travel",
+        "tags": ["vacation", "summer"],
+        "createdAt": "2023-06-15T14:30:00.000Z",
+        "updatedAt": "2023-06-15T14:30:00.000Z",
+        "media": [
+          {
+            "id": "media-id",
+            "type": "image",
+            "url": "https://cloudinary.url/image.jpg",
+            "order": 0
+          }
+        ],
+        "likeCount": 12,
+        "commentCount": 5,
+        "timeAgo": "2 days ago"
+      }
+      // Up to 3 recent published stories
+    ],
+    "recentDrafts": [
+      {
+        "id": "123e4567-e89b-12d3-a456-426614174001",
+        "title": "My Draft Story",
+        "content": "This is a draft story I'm working on",
+        "userId": "user-id",
+        "status": "draft",
+        "category": "technology",
+        "tags": ["coding", "development"],
+        "createdAt": "2023-06-14T10:20:00.000Z",
+        "updatedAt": "2023-06-16T09:15:00.000Z",
+        "media": [
+          {
+            "id": "media-id-2",
+            "type": "image",
+            "url": "https://cloudinary.url/draft-image.jpg",
+            "order": 0
+          }
+        ],
+        "timeAgo": "Yesterday"
+      }
+      // Up to 3 recent draft stories
+    ]
+  }
+}
+```
+
+## Utility Endpoints
+
+### Decrypt Response Data
+
+```
+POST /api/util/decrypt
+```
+
+### Publish Story
+
+```
+POST /api/story/publishStory
+```
+
+**Request Body:**
+
+```json
+{
+  "data": {
+    "storyId": "123e4567-e89b-12d3-a456-426614174000"
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "status": 200,
+  "msg": "Story published successfully",
+  "data": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "status": "published"
   }
 }
 ```

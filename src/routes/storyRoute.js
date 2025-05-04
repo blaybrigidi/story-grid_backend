@@ -1,8 +1,7 @@
 /** @format */
 import * as storyController from "../app/controllers/storyController.js";
-import * as mediaController from "../app/controllers/mediaController.js";
+import * as mediaController from "../app/controllers/mediaController.js"; // <-- Add this line
 import responseHandler from "../app/helper/encryptingRes.js";
-
 
 export default function (router, auth) {
 
@@ -53,6 +52,18 @@ export default function (router, auth) {
       auth.verifyToken, 
       auth.isUserVerified, 
       responseHandler(storyController.deleteComment)
+   );
+   
+   router.post("/story/getDashboardStories", 
+      auth.verifyToken, 
+      auth.isUserVerified, 
+      responseHandler(storyController.getDashboardStories)
+   );
+
+   router.post('/story/publishStory', 
+      auth.verifyToken, 
+      auth.isUserVerified, 
+      responseHandler(storyController.publishStory)
    );
 
    /*-------------------- Media APIs ---------------------------------------------------*/

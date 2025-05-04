@@ -8,10 +8,11 @@ import Like from '../models/Like.js';
 
 export const createStory = async (storyData, userId) => {
     try {
+        // Use default status 'draft' if none is provided
         const story = await Story.create({
             ...storyData,
             userId,
-            status: 'draft'
+            status: storyData.status || 'draft'
         });
 
         return {
@@ -581,6 +582,201 @@ export const deleteComment = async (commentId, userId) => {
         return {
             status: 500,
             msg: 'Failed to delete comment',
+            data: null
+        };
+    }
+};
+
+/**
+ * Get a user's recent stories and drafts for the dashboard
+ * @param {string} userId - ID of the user requesting their dashboard stories
+ * @param {number} limit - Number of stories to retrieve per category (published/draft)
+ * @returns {Object} - Response with status, message, and data containing recent stories and drafts
+ */
+export const getUserDashboardStories = async (userId, limit = 3) => {
+    try {
+        // Get recent published stories
+        const recentPublished = await Story.findAll({
+            where: { 
+                userId,
+                status: 'published'
+            },
+            include: [
+                {
+                    model: Media,
+                    as: 'media',
+                    attributes: ['id', 'type', 'url', 'order']
+                },
+                {
+                    model: Like,
+                    as: 'likes',
+                    attributes: ['userId']
+                },
+                {
+                    model: Comment,
+                    as: 'comments',
+                    attributes: ['id'],
+                    limit: 0,
+                    separate: true
+                }
+            ],
+            order: [['createdAt', 'DESC']],
+            limit
+        });
+        
+        // Get recent drafts
+        const recentDrafts = await Story.findAll({
+            where: { 
+                userId,
+                status: 'draft'
+            },
+            include: [
+                {
+                    model: Media,
+                    as: 'media',
+                    attributes: ['id', 'type', 'url', 'order']
+                }
+            ],
+            order: [['updatedAt', 'DESC']],
+            limit
+        });
+        
+        // Process stories to add metadata
+        const processStories = (stories) => {
+            return stories.map(story => {
+                const storyObj = story.toJSON();
+                
+                // Add metrics if available
+                if (story.likes) {
+                    storyObj.likeCount = story.likes.length;
+                }
+                
+                if (story.comments) {
+                    storyObj.commentCount = story.comments.length;
+                }
+                
+                // Calculate time ago for display
+                const lastModified = story.status === 'draft' ? story.updatedAt : story.createdAt;
+                const now = new Date();
+                const diffTime = Math.abs(now - lastModified);
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                
+                if (diffDays < 1) {
+                    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+                    if (diffHours < 1) {
+                        const diffMinutes = Math.floor(diffTime / (1000 * 60));
+                        storyObj.timeAgo = `${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''} ago`;
+                    } else {
+                        storyObj.timeAgo = `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+                    }
+                } else if (diffDays < 7) {
+                    storyObj.timeAgo = `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+                } else {
+                    storyObj.timeAgo = lastModified.toLocaleDateString();
+                }
+                
+                return storyObj;
+            });
+        };
+        
+        return {
+            status: 200,
+            msg: 'Dashboard stories retrieved successfully',
+            data: {
+                recentPublished: processStories(recentPublished),
+                recentDrafts: processStories(recentDrafts)
+            }
+        };
+    } catch (error) {
+        console.error('Get dashboard stories error:', error);
+        return {
+            status: 500,
+            msg: 'Failed to retrieve dashboard stories',
+            data: null,
+            error: {
+                code: error.code || 'DASHBOARD_STORIES_ERROR',
+                details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            }
+        };
+    }
+};
+
+export const getRecentStories = async (filters = {}, page = 1, limit = 10) => {
+    try {
+        const offset = (page - 1) * limit;
+        const where = {
+            status: 'published'
+        };
+
+        // Apply filters
+        if (filters.category) where.category = filters.category;
+        if (filters.userId) where.userId = filters.userId;
+        if (filters.search) {
+            where[Op.or] = [
+                { title: { [Op.like]: `%${filters.search}%` } },
+                { content: { [Op.like]: `%${filters.search}%` } }
+            ];
+        }
+
+        const { count, rows } = await Story.findAndCountAll({
+            where,
+            include: [
+                {
+                    model: User,
+                    as: 'author',
+                    attributes: ['id', 'username', 'email']
+                },
+                {
+                    model: Media,
+                    as: 'media',
+                    attributes: ['id', 'type', 'url', 'order']
+                },
+                {
+                    model: Like,
+                    as: 'likes',
+                    attributes: ['userId']
+                },
+                {
+                    model: Comment,
+                    as: 'comments',
+                    attributes: ['id'],
+                    limit: 0,
+                    separate: true
+                }
+            ],
+            order: [['publishedAt', 'DESC']],
+            limit,
+            offset
+        });
+
+        // Add engagement metrics to each story
+        const storiesWithMetrics = rows.map(story => {
+            const engagementScore = 
+                (story.likes.length * 2) + // Likes count double
+                story.comments.length + // Comments count
+                story.viewCount; // Views count
+            
+            story.setDataValue('engagementScore', engagementScore);
+            return story;
+        });
+
+        return {
+            status: 200,
+            msg: 'Recent stories retrieved successfully',
+            data: {
+                stories: storiesWithMetrics,
+                pagination: {
+                    total: count,
+                    page,
+                    pages: Math.ceil(count / limit)
+                }
+            }
+        };
+    } catch (error) {
+        console.error('Get recent stories error:', error);
+        return {
+            status: 500,
+            msg: 'Failed to retrieve recent stories',
             data: null
         };
     }

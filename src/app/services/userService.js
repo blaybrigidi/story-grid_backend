@@ -3,16 +3,13 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import User from '../models/User.js';
 import { sendOTP } from '../utils/email.js';
-
-// Generate a secure JWT secret if not provided
-const getJwtSecret = () => {
-    return process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
-};
+import { generateToken, verifyPassword, hashPassword } from '../helper/secure.js';
+import { Op } from 'sequelize';
 
 export const register = async (userData) => {
     try {
         console.log('Registering user with data:', JSON.stringify(userData, null, 2));
-        const { email, password, username, firstName, lastName, phoneNumber } = userData;
+        const { firstName, lastName, email, password, username } = userData;
 
         // Check if user already exists with this email
         const existingUserEmail = await User.findOne({ where: { email } });
@@ -41,10 +38,9 @@ export const register = async (userData) => {
         const user = await User.create({
             username,
             email,
-            password, // Pass the plain password, let the model hash it
             firstName,
             lastName,
-            phoneNumber
+            password // Pass the plain password, let the model hash it
         });
         console.log('User created successfully with ID:', user.id);
 
@@ -64,8 +60,7 @@ export const register = async (userData) => {
                     email: user.email,
                     username: user.username,
                     firstName: user.firstName,
-                    lastName: user.lastName,
-                    phoneNumber: user.phoneNumber
+                    lastName: user.lastName
                 },
                 token
             }
@@ -349,10 +344,7 @@ export const login = async (email, password) => {
                 user: {
                     id: user.id,
                     email: user.email,
-                    username: user.username,
-                    firstName: user.firstName,
-                    lastName: user.lastName,
-                    phoneNumber: user.phoneNumber
+                    username: user.username
                 },
                 token
             }
@@ -362,4 +354,47 @@ export const login = async (email, password) => {
         console.error('Error stack:', error.stack);
         throw error;
     }
+};
+
+/**
+ * Search users by username or email
+ * @param {string} query - Search query for username or email
+ * @param {number} limit - Maximum number of results to return
+ * @returns {Object} - Response with status, message, and data
+ */
+export const searchUsers = async (query, limit = 10) => {
+  try {
+    if (!query || query.trim() === '') {
+      return {
+        status: 400,
+        msg: 'Search query is required',
+        data: null
+      };
+    }
+
+    // Search by username or email
+    const users = await User.findAll({
+      where: {
+        [Op.or]: [
+          { username: { [Op.like]: `%${query}%` } },
+          { email: { [Op.like]: `%${query}%` } }
+        ]
+      },
+      attributes: ['id', 'username', 'email', 'role'],
+      limit: parseInt(limit)
+    });
+
+    return {
+      status: 200,
+      msg: 'Users found successfully',
+      data: users
+    };
+  } catch (error) {
+    console.error('Search users error:', error);
+    return {
+      status: 500,
+      msg: 'Failed to search users',
+      data: null
+    };
+  }
 };

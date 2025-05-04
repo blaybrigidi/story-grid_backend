@@ -1,5 +1,5 @@
 /** @format */
-import { createStory as createStoryService, getStory as getStoryService, deleteStory as deleteStoryService, likeStory as likeStoryService, unlikeStory as unlikeStoryService, addComment as addCommentService, getComments as getCommentsService, deleteComment as deleteCommentService } from '../services/storyService.js';
+import { createStory as createStoryService, getStory as getStoryService, deleteStory as deleteStoryService, likeStory as likeStoryService, unlikeStory as unlikeStoryService, addComment as addCommentService, getComments as getCommentsService, deleteComment as deleteCommentService, getUserDashboardStories as getUserDashboardStoriesService, getRecentStories as getRecentStoriesService, updateStory as updateStoryService } from '../services/storyService.js';
 import Media from '../models/Media.js';
 
 /**
@@ -9,7 +9,7 @@ import Media from '../models/Media.js';
  */
 export const createStory = async (req) => {
     try {
-        const { title, content, category, tags, media } = req.body.data || req.body;
+        const { title, content, category, tags, media, status } = req.body.data || req.body;
         const userId = req.user.id;
 
         // Validate required fields
@@ -34,7 +34,7 @@ export const createStory = async (req) => {
             title,
             content,
             userId,
-            status: 'draft',
+            status: status || 'draft',
             category: category || null,
             tags: tags || []
         };
@@ -353,3 +353,106 @@ export const deleteComment = async (req) => {
     }
 };
 
+/**
+ * Controller for getting user's dashboard stories (recent published and drafts)
+ * @param {Object} req - Express request object
+ * @returns {Object} - Response object with status, message, and data
+ */
+export const getDashboardStories = async (req) => {
+    try {
+        const { limit } = req.body.data || req.body || {};
+        const userId = req.user.id;
+
+        const result = await getUserDashboardStoriesService(
+            userId,
+            parseInt(limit) || 3
+        );
+
+        return {
+            status: result.status || 200,
+            msg: result.msg || "Dashboard stories retrieved successfully",
+            data: result.data
+        };
+    } catch (error) {
+        console.error("Get dashboard stories error:", error);
+        return {
+            status: 500,
+            msg: "Internal Server Error",
+            data: null,
+            error: {
+                code: error.code || 'DASHBOARD_STORIES_ERROR',
+                details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            }
+        };
+    }
+};
+
+/**
+ * Controller for getting recent stories
+ * @param {Object} req - Express request object
+ * @returns {Object} - Response object with status, message, and data
+ */
+export const getRecentStories = async (req) => {
+    try {
+        const { filters = {}, page = 1, limit = 10 } = req.body.data || req.body;
+
+        const result = await getRecentStoriesService(filters, page, limit);
+
+        return {
+            status: result.status || 200,
+            msg: result.msg || "Recent stories retrieved successfully",
+            data: result.data
+        };
+    } catch (error) {
+        console.error("Get recent stories error:", error);
+        return {
+            status: 500,
+            msg: "Internal Server Error",
+            data: null
+        };
+    }
+};
+
+/**
+ * Controller for publishing a story
+ * @param {Object} req - Express request object
+ * @returns {Object} - Response object with status, message, and data
+ */
+export const publishStory = async (req) => {
+    try {
+        const { storyId } = req.body.data || req.body;
+        const userId = req.user.id;
+
+        if (!storyId) {
+            return {
+                status: 400,
+                msg: "Story ID is required",
+                data: null
+            };
+        }
+
+        // Call service to update the story status to 'published'
+        const result = await updateStoryService(storyId, userId, { status: 'published' });
+
+        if (result.status === 404) {
+            return {
+                status: 404,
+                msg: "Story not found or unauthorized",
+                data: null
+            };
+        }
+
+        return {
+            status: result.status || 200,
+            msg: result.msg || "Story published successfully",
+            data: result.data
+        };
+    } catch (error) {
+        console.error("Publish story error:", error);
+        return {
+            status: 500,
+            msg: "Internal Server Error",
+            data: null
+        };
+    }
+};
