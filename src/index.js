@@ -144,7 +144,8 @@ router.get("/ping", (req, res) => {
 
 // Routes
 app.use('/api/users', auth.verifyToken, userRoutes);
-app.use('/api/admin', auth.verifyAdminToken, adminRoutes);
+// Admin routes are already registered in initializeRoutes
+// app.use('/api/admin', auth.verifyAdminToken, adminRoutes);
 app.use('/api/friends', auth.verifyToken, friendRoutes);
 app.use('/api/auth', authRoutes);
 
