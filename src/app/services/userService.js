@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { sendOTP } from '../utils/email.js';
 import { generateToken, verifyPassword, hashPassword } from '../helper/secure.js';
+import { Op } from 'sequelize';
 
 export const register = async (userData) => {
     try {
@@ -339,4 +340,47 @@ export const login = async (email, password) => {
         console.error('Error stack:', error.stack);
         throw error;
     }
+};
+
+/**
+ * Search users by username or email
+ * @param {string} query - Search query for username or email
+ * @param {number} limit - Maximum number of results to return
+ * @returns {Object} - Response with status, message, and data
+ */
+export const searchUsers = async (query, limit = 10) => {
+  try {
+    if (!query || query.trim() === '') {
+      return {
+        status: 400,
+        msg: 'Search query is required',
+        data: null
+      };
+    }
+
+    // Search by username or email
+    const users = await User.findAll({
+      where: {
+        [Op.or]: [
+          { username: { [Op.like]: `%${query}%` } },
+          { email: { [Op.like]: `%${query}%` } }
+        ]
+      },
+      attributes: ['id', 'username', 'email', 'role'],
+      limit: parseInt(limit)
+    });
+
+    return {
+      status: 200,
+      msg: 'Users found successfully',
+      data: users
+    };
+  } catch (error) {
+    console.error('Search users error:', error);
+    return {
+      status: 500,
+      msg: 'Failed to search users',
+      data: null
+    };
+  }
 };
