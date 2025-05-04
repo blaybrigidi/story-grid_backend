@@ -39,6 +39,11 @@ const User = sequelize.define('User', {
   role: {
     type: DataTypes.ENUM('user', 'admin'),
     defaultValue: 'user'
+  },
+  bio: {
+    type: DataTypes.STRING, // or DataTypes.TEXT if you want longer bios
+    allowNull: true,
+    defaultValue: ""
   }
 }, {
   hooks: {
@@ -55,4 +60,4 @@ const User = sequelize.define('User', {
   }
 });
 
-export default User; 
+export default User;

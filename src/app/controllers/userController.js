@@ -146,9 +146,18 @@ export const updateProfile = async (req) => {
   try {
     const userId = req.user.id;
     const updateData = req.body.data;
-    
+
+    // Optional: Validate bio length
+    if (updateData.bio && updateData.bio.length > 500) {
+      return {
+        status: 400,
+        msg: "Bio must be 500 characters or less",
+        data: null
+      };
+    }
+
     const result = await updateProfileService(userId, updateData);
-    
+
     return {
       status: result.status,
       msg: result.msg,
