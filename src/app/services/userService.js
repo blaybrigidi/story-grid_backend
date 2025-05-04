@@ -8,7 +8,7 @@ import { Op } from 'sequelize';
 export const register = async (userData) => {
     try {
         console.log('Registering user with data:', JSON.stringify(userData, null, 2));
-        const { email, password, username } = userData;
+        const { firstName, lastName, email, password, username } = userData;
 
         // Check if user already exists with this email
         const existingUserEmail = await User.findOne({ where: { email } });
@@ -37,6 +37,8 @@ export const register = async (userData) => {
         const user = await User.create({
             username,
             email,
+            firstName,
+            lastName,
             password // Pass the plain password, let the model hash it
         });
         console.log('User created successfully with ID:', user.id);
@@ -53,7 +55,9 @@ export const register = async (userData) => {
                 user: {
                     id: user.id,
                     email: user.email,
-                    username: user.username
+                    username: user.username,
+                    firstName: user.firstName,
+                    lastName: user.lastName
                 },
                 token
             }
